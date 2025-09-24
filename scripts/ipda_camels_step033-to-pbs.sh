@@ -162,7 +162,7 @@ logfile=logfile_ipda_camels033-to-pbs_${thislogdate}.txt
 out_path_step033_summary="camels033_count-reads_summary_${thislogdate}"
 
 ## Create output directories
-mkdir -p ${out_path_step033_MAGeCK}
+mkdir -p ${out_path_step033_summary}
 
 #................................................
 #  Print Execution info to user
@@ -183,7 +183,7 @@ echo "## PBS job walltime required:   ${walltime}"
 echo
 echo "## Outputs created:"
 echo
-echo "## Output files saved to:       ${out_path_step033_MAGeCK}"
+echo "## Output files saved to:       ${out_path_step033_summary}"
 echo "## logfile will be saved as:    ${logfile}"
 echo
 
@@ -215,7 +215,7 @@ echo "## PBS job walltime required:   ${walltime}"
 echo
 echo "## Outputs created:"
 echo
-echo "## Output files saved to:       ${out_path_step033_MAGeCK}"
+echo "## Output files saved to:       ${out_path_step033_summary}"
 echo "## This is logfile:             ${logfile}"
 
 set -v
@@ -287,7 +287,7 @@ sed -i 's,${human_thislogdate},'"${human_thislogdate}"',g' "$logfile"
 sed -i 's,${thislogdate},'"${thislogdate}"',g' "$logfile"
 sed -i 's,${user},'"${user}"',g' "$logfile"
 sed -i 's,${module_mageck},'"${module_mageck}"',g' "$logfile"
-sed -i 's,${out_path_step033_MAGeCK},'"${out_path_step033_MAGeCK}"',g' "$logfile"
+sed -i 's,${out_path_step033_summary},'"${out_path_step033_summary}"',g' "$logfile"
 sed -i 's,${logfile},'"${logfile}"',g' "$logfile"
 sed -n -e :a -e '1,3!{P;N;D;};N;ba' $logfile > tmp ; mv tmp $logfile
 set +v
