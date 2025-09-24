@@ -233,14 +233,14 @@ pmedian1=`grep "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_medi
 len=`grep "Determining the trim-5" ${file} | grep 'Possible gRNA lengths' | cut -d':' -f5 | sort | uniq | tr '\n' ';' | sed 's/.$//'`;
 labelexp1=`grep -A1 "Summary of file.*${rep1}" | cut -d':' -f4- | sort | uniq | grep 'label' | tr ' ' '\t' | cut -f3`; 
 readsexp1=`grep -A2 "Summary of file.*${rep1}" | cut -d':' -f4- | sort | uniq | grep 'reads' | tr ' ' '\t' | cut -f3`;
-mappedreadsexp1=`grep -A13"Summary of file.*${rep1}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
+mappedreadsexp1=`grep -A3 "Summary of file.*${rep1}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
 totalsgrnasexp1=`grep -A4 "Summary of file.*${rep1}" | cut -d':' -f4- | sort | uniq | grep 'totalsgrnas' | tr ' ' '\t' | cut -f3`;
 labelctrl1=`grep -A1 "Summary of file.*${ctrl1}" | cut -d':' -f4- | sort | uniq | grep 'label' | tr ' ' '\t' | cut -f3`; 
 readsctrl1=`grep -A2 "Summary of file.*${ctrl1}" | cut -d':' -f4- | sort | uniq | grep 'reads' | tr ' ' '\t' | cut -f3`;
 mappedreadsctrl1=`grep -A3 "Summary of file.*${ctrl1}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
 totalsgrnasctrl1=`grep -A4 "Summary of file.*${ctrl1}" | cut -d':' -f4- | sort | uniq | grep 'totalsgrnas' | tr ' ' '\t' | cut -f3`;
-vectorsizenc1=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep1\|Summary of file.*${rep1}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep1" | cut -d':' -f5`;
-vectorsizemedian1=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep1\|Summary of file.*${rep1}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep1" | cut -d':' -f5`;
+vectorsizenc1=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep1\|Summary of file.*${rep1}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep1" | cut -d':' -f5 | tail -n1`;
+vectorsizemedian1=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep1\|Summary of file.*${rep1}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep1" | cut -d':' -f5 | tail -n1`;
 
 # get metrics from replicate 2 (experiment and control)
 pnc2=`grep "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep2" ${file} | cut -d':' -f5- | uniq`;
@@ -248,14 +248,14 @@ pmedian2=`grep "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_medi
 len=`grep "Determining the trim-5" ${file} | grep 'Possible gRNA lengths' | cut -d':' -f5 | sort | uniq | tr '\n' ';' | sed 's/.$//'`;
 labelexp2=`grep -A1 "Summary of file.*${rep2}" | cut -d':' -f4- | sort | uniq | grep 'label' | tr ' ' '\t' | cut -f3`; 
 readsexp2=`grep -A2 "Summary of file.*${rep2}" | cut -d':' -f4- | sort | uniq | grep 'reads' | tr ' ' '\t' | cut -f3`;
-mappedreadsexp2=`grep -A13"Summary of file.*${rep2}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
+mappedreadsexp2=`grep -A3 "Summary of file.*${rep2}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
 totalsgrnasexp2=`grep -A4 "Summary of file.*${rep2}" | cut -d':' -f4- | sort | uniq | grep 'totalsgrnas' | tr ' ' '\t' | cut -f3`;
 labelctrl2=`grep -A1 "Summary of file.*${ctrl2}" | cut -d':' -f4- | sort | uniq | grep 'label' | tr ' ' '\t' | cut -f3`; 
 readsctrl2=`grep -A2 "Summary of file.*${ctrl2}" | cut -d':' -f4- | sort | uniq | grep 'reads' | tr ' ' '\t' | cut -f3`;
 mappedreadsctrl2=`grep -A3 "Summary of file.*${ctrl2}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
 totalsgrnasctrl2=`grep -A4 "Summary of file.*${ctrl2}" | cut -d':' -f4- | sort | uniq | grep 'totalsgrnas' | tr ' ' '\t' | cut -f3`;
-vectorsizenc2=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep2\|Summary of file.*${rep2}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep2" | cut -d':' -f5`;
-vectorsizemedian2=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep2\|Summary of file.*${rep2}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep2" | cut -d':' -f5`;
+vectorsizenc2=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep2\|Summary of file.*${rep2}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep2" | cut -d':' -f5 | tail -n1`;
+vectorsizemedian2=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep2\|Summary of file.*${rep2}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep2" | cut -d':' -f5 | tail -n1`;
 
 # get metrics from replicate 3 (experiment and control)
 pnc3=`grep "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep3" ${file} | cut -d':' -f5- | uniq`;
@@ -267,10 +267,10 @@ mappedreadsexp3=`grep -A3 "Summary of file.*${rep3}" | cut -d':' -f4- | sort | u
 totalsgrnasexp3=`grep -A4 "Summary of file.*${rep3}" | cut -d':' -f4- | sort | uniq | grep 'totalsgrnas' | tr ' ' '\t' | cut -f3`;
 labelctrl3=`grep -A1 "Summary of file.*${ctrl3}" | cut -d':' -f4- | sort | uniq | grep 'label' | tr ' ' '\t' | cut -f3`; 
 readsctrl3=`grep -A2 "Summary of file.*${ctrl3}" | cut -d':' -f4- | sort | uniq | grep 'reads' | tr ' ' '\t' | cut -f3`;
-mappedreadsctrl3=`grep -A13"Summary of file.*${ctrl3}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
+mappedreadsctrl3=`grep -A3 "Summary of file.*${ctrl3}" | cut -d':' -f4- | sort | uniq | grep 'mappedreads' | tr ' ' '\t' | cut -f3`;
 totalsgrnasctrl3=`grep -A4 "Summary of file.*${ctrl3}" | cut -d':' -f4- | sort | uniq | grep 'totalsgrnas' | tr ' ' '\t' | cut -f3`;
-vectorsizenc3=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep3\|Summary of file.*${rep3}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep3" | cut -d':' -f5`;
-vectorsizemedian3=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep3\|Summary of file.*${rep3}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep3" | cut -d':' -f5`;
+vectorsizenc3=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep3\|Summary of file.*${rep3}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_nctrl-rep3" | cut -d':' -f5 | tail -n1`;
+vectorsizemedian3=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep3\|Summary of file.*${rep3}" ${file} | grep -A2 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${celltype}_median-rep3" | cut -d':' -f5 | tail -n1`;
 
 # write to TSV file
 echo -e "${library}\t${celltype}\t${pnc1}\t${len}\t${labelexp1}\t${readsexp1}\t${mappedreadsexp1}\t${totalsgrnasexp1}\t${labelctrl1}\t${readsctrl1}\t${mappedreadsctrl1}\t${totalsgrnasctrl1}\t${vectorsizenc1}\n${library}\t${celltype}\t${pmedian1}\t${len}\t${labelexp1}\t${readsexp1}\t${mappedreadsexp1}\t${totalsgrnasexp1}\t${labelctrl1}\t${readsctrl1}\t${mappedreadsctrl1}\t${totalsgrnasctrl1}\t${vectorsizemedian1}\n${library}\t${celltype}\t${pnc2}\t${len}\t${labelexp2}\t${readsexp2}\t${mappedreadsexp2}\t${totalsgrnasexp2}\t${labelctrl2}\t${readsctrl2}\t${mappedreadsctrl2}\t${totalsgrnasctrl2}\t${vectorsizenc2}\n${library}\t${celltype}\t${pmedian2}\t${len}\t${labelexp2}\t${readsexp2}\t${mappedreadsexp2}\t${totalsgrnasexp2}\t${labelctrl2}\t${readsctrl2}\t${mappedreadsctrl2}\t${totalsgrnasctrl2}\t${vectorsizemedian2}\n${library}\t${celltype}\t${pnc1}\t${len}\t${labelexp3}\t${readsexp3}\t${mappedreadsexp3}\t${totalsgrnasexp3}\t${labelctrl3}\t${readsctrl3}\t${mappedreadsctrl3}\t${totalsgrnasctrl3}\t${vectorsizenc3}\n${library}\t${celltype}\t${pmedian1}\t${len}\t${labelexp3}\t${readsexp3}\t${mappedreadsexp3}\t${totalsgrnasexp3}\t${labelctrl3}\t${readsctrl3}\t${mappedreadsctrl3}\t${totalsgrnasctrl3}\t${vectorsizemedian3}" ${out_path_step033_summary}/summary_${library}-${celltype}.tsv ; done
