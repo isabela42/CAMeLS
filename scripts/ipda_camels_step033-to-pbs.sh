@@ -225,7 +225,6 @@ set -v
 #................................................
 
 date ## Collect run summary for step 030 at
-echo -e "library\tcell-type\tnorm\tlabel-exp\treads\tmapped-reads\ttotal-sgRNA\tlabel-ctrl\treads\tmapped-reads\ttotal-sgRNA\tvector-size\tparameters" >> ${out_path_step033_summary}/summary_${library}.tsv; 
 cut -f1 ${input} | sort | uniq | while read file; do library=`grep "${file}" ${input} | cut -f9 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; 
 
 # get metrics from replicate 1 (experiment and control)
@@ -275,6 +274,8 @@ vectorsizemedian3=`grep -B1 "Parameters:.*-n camels031_count-reads_MAGeCK_.*/${c
 
 # write to TSV file
 echo -e "${library}\t${celltype}\tneg-ctrl\t${len}\t${labelexp1}\t${readsexp1}\t${mappedreadsexp1}\t${totalsgrnasexp1}\t${labelctrl1}\t${readsctrl1}\t${mappedreadsctrl1}\t${totalsgrnasctrl1}\t${vectorsizenc1}\t${pnc1}\n${library}\t${celltype}\median\t${len}\t${labelexp1}\t${readsexp1}\t${mappedreadsexp1}\t${totalsgrnasexp1}\t${labelctrl1}\t${readsctrl1}\t${mappedreadsctrl1}\t${totalsgrnasctrl1}\t${vectorsizemedian1}\t${pmedian1}\n${library}\t${celltype}\tneg-ctrl\t${len}\t${labelexp2}\t${readsexp2}\t${mappedreadsexp2}\t${totalsgrnasexp2}\t${labelctrl2}\t${readsctrl2}\t${mappedreadsctrl2}\t${totalsgrnasctrl2}\t${vectorsizenc2}\t${pnc2}\n${library}\t${celltype}\tmedian\t${len}\t${labelexp2}\t${readsexp2}\t${mappedreadsexp2}\t${totalsgrnasexp2}\t${labelctrl2}\t${readsctrl2}\t${mappedreadsctrl2}\t${totalsgrnasctrl2}\t${vectorsizemedian2}\t${pmedian2}\n${library}\t${celltype}\tneg-ctrl\t${len}\t${labelexp3}\t${readsexp3}\t${mappedreadsexp3}\t${totalsgrnasexp3}\t${labelctrl3}\t${readsctrl3}\t${mappedreadsctrl3}\t${totalsgrnasctrl3}\t${vectorsizenc3}\t${pnc3}\n${library}\t${celltype}\tmedian\t${len}\t${labelexp3}\t${readsexp3}\t${mappedreadsexp3}\t${totalsgrnasexp3}\t${labelctrl3}\t${readsctrl3}\t${mappedreadsctrl3}\t${totalsgrnasctrl3}\t${vectorsizemedian3}\t${pmedian3}" >> ${out_path_step033_summary}/summary_${library}.tsv ; done
+
+ls ${out_path_step033_summary}/summary_* | while read f; do sed '1 i\library\tcell-type\tnorm\tlabel-exp\treads\tmapped-reads\ttotal-sgRNA\tlabel-ctrl\treads\tmapped-reads\ttotal-sgRNA\tvector-size\tparameters' ${f} ; done
 
 # This will remove $VARNAMES from output file with the actual $VARVALUE
 # allowing for easily retracing commands
