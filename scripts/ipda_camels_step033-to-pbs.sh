@@ -22,17 +22,56 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "01:00:00"
                             directory. This TSV file should contain:
                             
                             Col1:
-                            camels031_count-reads_MAGeCK_DATE/celltype_normalization-rep#
-                            e.g. camels031_count-reads_MAGeCK_23092025165124AEST/FT194_negCtrol-rep3
-                            for negative control as normalization and
-                            camels031_count-reads_MAGeCK_23092025165124AEST/FT194_median-rep3
+                            /path/from/working/dir/to/pbs-error-file.e####
 
                             Col2:
                             cell type
                             E.g. FT194
 
                             Col3:
-                            /path/from/working/dir/to/pbs-error-file.e####
+                            /path/from/working/dir/to/raw/reads/stem-ctrl-day0-rep1*1.f*
+                            of R1 file in individual line and no full stops.
+                            Warning: Either R1 or R2 could be given as input.
+                            However, R1 is tipically used for this analysis.
+                            Extensions accepted: .fastq.gz/fq.gz
+
+                            Col4:
+                            /path/from/working/dir/to/raw/reads/stem-ctrl-day0-rep2*1.f*
+                            of R1 file in individual line and no full stops.
+                            Warning: Either R1 or R2 could be given as input.
+                            However, R1 is tipically used for this analysis.
+                            Extensions accepted: .fastq.gz/fq.gz
+
+                            Col5:
+                            /path/from/working/dir/to/raw/reads/stem-ctrl-day0-rep3*1.f*
+                            of R1 file in individual line and no full stops.
+                            Warning: Either R1 or R2 could be given as input.
+                            However, R1 is tipically used for this analysis.
+                            Extensions accepted: .fastq.gz/fq.gz
+
+                            Col6:
+                            /path/from/working/dir/to/raw/reads/stem-experiment-rep1*1.f*
+                            of R1 file in individual line and no full stops.
+                            Warning: Either R1 or R2 could be given as input.
+                            However, R1 is tipically used for this analysis.
+                            Extensions accepted: .fastq.gz/fq.gz
+
+                            Col7:
+                            /path/from/working/dir/to/raw/reads/stem-experiment-rep2*1.f*
+                            of R1 file in individual line and no full stops.
+                            Warning: Either R1 or R2 could be given as input.
+                            However, R1 is tipically used for this analysis.
+                            Extensions accepted: .fastq.gz/fq.gz
+
+                            Col8:
+                            /path/from/working/dir/to/raw/reads/stem-experiment-rep3*1.f*
+                            of R1 file in individual line and no full stops.
+                            Warning: Either R1 or R2 could be given as input.
+                            However, R1 is tipically used for this analysis.
+                            Extensions accepted: .fastq.gz/fq.gz
+
+                            Col9:
+                            library-stem
 
                             It does not matter if same stem 
                             appears more than once on this input file.
