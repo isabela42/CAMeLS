@@ -14,7 +14,7 @@ CAMeLS pipeline (CRISPR Analysis Method for Library Screens).
 
 Usage: bash ipda_camels_step031-to-pbs.sh -i "path/to/input/files" -p "PBS stem" -e "email" -m INT -c INT -w "HH:MM:SS"
 
-Resources used for pipeline in-house: -m 20 -c 2 -w "08:00:00"
+Resources used for pipeline in-house: -m 5 -c 1 -w "05:00:00"
 
 ## Input:
 
@@ -95,7 +95,7 @@ Pipeline description:
 
 #   010 Quality check sequencing (1FastQC, 2MultiQC)
 #   020 Plasmid-representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV)
-#-->030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates)
+#-->030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary)
 #   040 Statistical test (1MAGeCK)
 #   050 Plot results (1MAGeCK)
 

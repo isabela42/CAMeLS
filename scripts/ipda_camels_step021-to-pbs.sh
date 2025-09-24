@@ -6,7 +6,7 @@ echo "
 Written by Isabela Almeida
 Based on CASE by Maina Bitar
 Created on May 21, 2025
-Last modified on September 15, 2025
+Last modified on September 24, 2025
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 021 of the
@@ -58,6 +58,9 @@ Pipeline description:
 
 #   010 Quality check sequencing (1FastQC, 2MultiQC)
 #-->020 Plasmid-representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV)
+#   030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary)
+#   040 Statistical test (1MAGeCK)
+#   050 Plot results (1MAGeCK)
 
 Please contact Isabela Almeida at mb.isabela42@gmail.com if you encounter any problems.
 "
