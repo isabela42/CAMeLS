@@ -167,6 +167,9 @@ logfile=logfile_ipda_camels032-to-pbs_${thislogdate}.txt
 # <https://sourceforge.net/projects/mageck/>
 module_mageck="conda-envs/mageck-0.5.9.5"
 
+# Rstudio
+module_rstudio="rstudio/R-4.5.0"
+
 #................................................
 #  Set and create output path
 #................................................
@@ -277,6 +280,7 @@ cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Load Softwares
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "module load ${module_mageck}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo "module load ${module_rstudio}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 
 ## Write PBS command lines
@@ -289,13 +293,17 @@ cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGe
 cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck count --sgrna-len ${guidelen} --control-sgrna ${negativectrl} --norm-method control -l ${librarytsv} -n ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates --sample-label ${celltype},CTRL --fastq ${rep1},${rep2},${rep3} ${ctrl1},${ctrl2},${ctrl3}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 # [--gene-lfc-method {median,alphamedian,mean,alphamean,secondbest}]
 cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck test --pdf-report --control-sgrna ${negativectrl} --norm-method control --gene-lfc-method alphamean -k ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates.count.txt -t ${celltype} -c CTRL -n ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates.count_report.Rmd" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates.report.Rmd" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 
 cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK with median normalization at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 # Each replicate individually compared with the CTRL (Day 0) in single-end mode at gene level.
 cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck count --sgrna-len ${guidelen} --norm-method median -l ${librarytsv} -n ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates --sample-label ${celltype},CTRL --fastq ${rep1},${rep2},${rep3} ${ctrl1},${ctrl2},${ctrl3}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 # [--gene-lfc-method {median,alphamedian,mean,alphamean,secondbest}]
-cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck test --pdf-report --norm-method median --gene-lfc-method alphamedian -k ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates.count.txt -t ${celltype} -c CTRL -n ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck test --pdf-report --norm-method median --gene-lfc-method alphamedian -k ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates.count.txt -t ${celltype} -c CTRL -n ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates.count_report.Rmd" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates.report.Rmd" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs
@@ -319,6 +327,7 @@ sed -i 's,${human_thislogdate},'"${human_thislogdate}"',g' "$logfile"
 sed -i 's,${thislogdate},'"${thislogdate}"',g' "$logfile"
 sed -i 's,${user},'"${user}"',g' "$logfile"
 sed -i 's,${module_mageck},'"${module_mageck}"',g' "$logfile"
+sed -i 's,${module_rstudio},'"${module_rstudio}"',g' "$logfile"
 sed -i 's,${out_path_step032_MAGeCK},'"${out_path_step032_MAGeCK}"',g' "$logfile"
 sed -i 's,${logfile},'"${logfile}"',g' "$logfile"
 sed -n -e :a -e '1,3!{P;N;D;};N;ba' $logfile > tmp ; mv tmp $logfile
