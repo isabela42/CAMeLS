@@ -6,7 +6,7 @@ echo "
 Written by Isabela Almeida
 Based on CASE by Maina Bitar
 Created on September 24, 2025
-Last modified on September 25, 2025
+Last modified on September 26, 2025
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 032 of the
@@ -291,13 +291,14 @@ cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_
 cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK with negative control normalization at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 # Each replicate individually compared with the CTRL (Day 0) in single-end mode at gene level.
 cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck count --sgrna-len ${guidelen} --control-sgrna ${negativectrl} --norm-method control -l ${librarytsv} -n ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates --sample-label ${celltype},CTRL --fastq ${rep1},${rep2},${rep3} ${ctrl1},${ctrl2},${ctrl3}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates.count_report.Rmd" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript -e \"rmarkdown::render('${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates.count_report.Rmd', output_format = 'html_notebook')\"" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 
 cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK with median normalization at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 # Each replicate individually compared with the CTRL (Day 0) in single-end mode at gene level.
 cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck count --sgrna-len ${guidelen} --norm-method median -l ${librarytsv} -n ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates --sample-label ${celltype},CTRL --fastq ${rep1},${rep2},${rep3} ${ctrl1},${ctrl2},${ctrl3}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates.count_report.Rmd" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript -e \"rmarkdown::render('${out_path_step032_MAGeCK}/${celltype}_median-all-replicates.count_report.Rmd', output_format = 'html_notebook')\"" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs

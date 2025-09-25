@@ -6,7 +6,7 @@ echo "
 Written by Isabela Almeida
 Based on CASE by Maina Bitar
 Created on September 25, 2025
-Last modified on September 25, 2025
+Last modified on September 26, 2025
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 041 of the
@@ -253,7 +253,7 @@ cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_
 cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK test at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 # [--gene-lfc-method {median,alphamedian,mean,alphamean,secondbest}]
 cut -f1 ${input} | sort | uniq | while read celltype; do negativectrl=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; countfile=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; stem=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; echo "mageck test --pdf-report --control-sgrna ${negativectrl} --norm-method control --gene-lfc-method alphamean -k ${countfile} -t ${celltype} -c CTRL -n ${out_path_step041_MAGeCK}/${celltype}_${stem}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do negativectrl=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; countfile=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; stem=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; echo "Rscript ${out_path_step041_MAGeCK}/${celltype}_${stem}.report.Rmd" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do negativectrl=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; countfile=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; stem=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; echo "Rscript -e \"rmarkdown::render('${out_path_step041_MAGeCK}/${celltype}_${stem}.report.Rmd', output_format = 'html_notebook')\"" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs
