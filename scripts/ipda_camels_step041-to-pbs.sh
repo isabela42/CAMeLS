@@ -5,14 +5,14 @@ usage(){
 echo "
 Written by Isabela Almeida
 Based on CASE by Maina Bitar
-Created on September 24, 2025
+Created on September 25, 2025
 Last modified on September 25, 2025
 Version: ${version}
 
-Description: Write and submit PBS jobs for Step 032 of the
+Description: Write and submit PBS jobs for Step 041 of the
 CAMeLS pipeline (CRISPR Analysis Method for Library Screens). 
 
-Usage: bash ipda_camels_step032-to-pbs.sh -i "path/to/input/files" -p "PBS stem" -e "email" -m INT -c INT -w "HH:MM:SS"
+Usage: bash ipda_camels_step041-to-pbs.sh -i "path/to/input/files" -p "PBS stem" -e "email" -m INT -c INT -w "HH:MM:SS"
 
 Resources used for pipeline in-house: -m 5 -c 1 -w "05:00:00"
 
@@ -26,57 +26,19 @@ Resources used for pipeline in-house: -m 5 -c 1 -w "05:00:00"
                             E.g. FT194
 
                             Col2:
-                            /path/from/working/dir/to/library.tsv
-                            file with guideid\tguide-sequence\tgene-name
-
-                            Col3:
-                            guide-size-INT
-                            E.g. 23 for a library with 23nt guides
-
-                            Col4:
                             /path/from/working/dir/to/negative-controls-id.txt
 
-                            Col5:
-                            /path/from/working/dir/to/raw/reads/stem-ctrl-day0-rep1*1.f*
-                            of R1 file in individual line and no full stops.
-                            Warning: Either R1 or R2 could be given as input.
-                            However, R1 is tipically used for this analysis.
-                            Extensions accepted: .fastq.gz/fq.gz
+                            Col3:
+                            path to MAGeCK count files, e.g.:
+                            /path/from/working/dir/to/camels03*_count-reads-*_MAGeCK_DATE/celltype_nctrl-all-replicates.count.txt
+                            /path/from/working/dir/to/camels03*_count-reads-*_MAGeCK_DATE/celltype_median-all-replicates.count.txt
+                            /path/from/working/dir/to/camels03*_count-reads-*_MAGeCK_DATE/celltype_nctrl-rep#.count.txt
+                            /path/from/working/dir/to/camels03*_count-reads-*_MAGeCK_DATE/celltype_median-rep#.count.txt
 
-                            Col6:
-                            /path/from/working/dir/to/raw/reads/stem-ctrl-day0-rep2*1.f*
-                            of R1 file in individual line and no full stops.
-                            Warning: Either R1 or R2 could be given as input.
-                            However, R1 is tipically used for this analysis.
-                            Extensions accepted: .fastq.gz/fq.gz
-
-                            Col7:
-                            /path/from/working/dir/to/raw/reads/stem-ctrl-day0-rep3*1.f*
-                            of R1 file in individual line and no full stops.
-                            Warning: Either R1 or R2 could be given as input.
-                            However, R1 is tipically used for this analysis.
-                            Extensions accepted: .fastq.gz/fq.gz
-
-                            Col8:
-                            /path/from/working/dir/to/raw/reads/stem-experiment-rep1*1.f*
-                            of R1 file in individual line and no full stops.
-                            Warning: Either R1 or R2 could be given as input.
-                            However, R1 is tipically used for this analysis.
-                            Extensions accepted: .fastq.gz/fq.gz
-
-                            Col9:
-                            /path/from/working/dir/to/raw/reads/stem-experiment-rep2*1.f*
-                            of R1 file in individual line and no full stops.
-                            Warning: Either R1 or R2 could be given as input.
-                            However, R1 is tipically used for this analysis.
-                            Extensions accepted: .fastq.gz/fq.gz
-
-                            Col10:
-                            /path/from/working/dir/to/raw/reads/stem-experiment-rep3*1.f*
-                            of R1 file in individual line and no full stops.
-                            Warning: Either R1 or R2 could be given as input.
-                            However, R1 is tipically used for this analysis.
-                            Extensions accepted: .fastq.gz/fq.gz
+                            Col4:
+                            file-stem
+                            e.g. nctrl-all-replicates
+                            Note: Please keep it consistent with the file provided on Col3
 
                             It does not matter if same stem 
                             appears more than once on this input file.
@@ -96,8 +58,8 @@ Pipeline description:
 
 #   010 Quality check sequencing (1FastQC, 2MultiQC)
 #   020 Plasmid-representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV)
-#-->030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary)
-#   040 Statistical test (1MAGeCK)
+#   030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary)
+#-->040 Statistical test (1MAGeCK)
 #   050 Plot results (1MAGeCK)
 
 Please contact Isabela Almeida at mb.isabela42@gmail.com if you encounter any problems.
@@ -142,7 +104,7 @@ do
         w) walltime="${OPTARG}";;    # Clock walltime required for PBS job
         h) Help ; exit;;             # Print Help and exit
         v) echo "${version}"; exit;; # Print version and exit
-        ?) echo script usage: bash ipda_camels_step032-to-pbs.sh -i path/to/input/files -p PBS stem -e email -m INT -c INT -w "HH:MM:SS" >&2
+        ?) echo script usage: bash ipda_camels_step041-to-pbs.sh -i path/to/input/files -p PBS stem -e email -m INT -c INT -w "HH:MM:SS" >&2
            exit;;
     esac
 done
@@ -157,7 +119,7 @@ done
 # and memory/CPU usage for all executions
 thislogdate=$(date +'%d%m%Y%H%M%S%Z')
 human_thislogdate=`date`
-logfile=logfile_ipda_camels032-to-pbs_${thislogdate}.txt
+logfile=logfile_ipda_camels041-to-pbs_${thislogdate}.txt
 
 #................................................
 #  Required modules, softwares and libraries
@@ -175,17 +137,17 @@ module_rstudio="rstudio/R-4.5.0"
 #................................................
 
 ## Set stem for output directories
-out_path_step032_MAGeCK="camels032_count-reads-combined_MAGeCK_${thislogdate}"
+out_path_step041_MAGeCK="camels041_stats_MAGeCK_${thislogdate}"
 
 ## Create output directories
-mkdir -p ${out_path_step032_MAGeCK}
+mkdir -p ${out_path_step041_MAGeCK}
 
 #................................................
 #  Print Execution info to user
 #................................................
 
 date
-echo "## Executing bash ipda_camels_step032-to-pbs.sh"
+echo "## Executing bash ipda_camels_step041-to-pbs.sh"
 echo "## This execution PID: ${pid}"
 echo
 echo "## Given inputs:"
@@ -199,7 +161,7 @@ echo "## PBS job walltime required:   ${walltime}"
 echo
 echo "## Outputs created:"
 echo
-echo "## Output files saved to:       ${out_path_step032_MAGeCK}"
+echo "## Output files saved to:       ${out_path_step041_MAGeCK}"
 echo "## logfile will be saved as:    ${logfile}"
 echo
 
@@ -217,7 +179,7 @@ echo
 exec &> "${logfile}"
 
 date
-echo "## Executing bash ipda_camels_step032-to-pbs.sh"
+echo "## Executing bash ipda_camels_step041-to-pbs.sh"
 echo "## This execution PID: ${pid}"
 echo
 echo "## Given inputs:"
@@ -231,7 +193,7 @@ echo "## PBS job walltime required:   ${walltime}"
 echo
 echo "## Outputs created:"
 echo
-echo "## Output files saved to:       ${out_path_step032_MAGeCK}"
+echo "## Output files saved to:       ${out_path_step041_MAGeCK}"
 echo "## This is logfile:             ${logfile}"
 
 set -v
@@ -288,25 +250,19 @@ cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Run step" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK with negative control normalization at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-# Each replicate individually compared with the CTRL (Day 0) in single-end mode at gene level.
-cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck count --sgrna-len ${guidelen} --control-sgrna ${negativectrl} --norm-method control -l ${librarytsv} -n ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates --sample-label ${celltype},CTRL --fastq ${rep1},${rep2},${rep3} ${ctrl1},${ctrl2},${ctrl3}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_nctrl-all-replicates.count_report.Rmd" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-
-cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK with median normalization at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-# Each replicate individually compared with the CTRL (Day 0) in single-end mode at gene level.
-cut -f1 ${input} | sort | uniq | while read celltype; do librarytsv=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; guidelen=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; negativectrl=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; ctrl1=`grep "${celltype}" ${input} | cut -f5 | sort | uniq`; rep1=`grep "${celltype}" ${input} | cut -f8 | sort | uniq`; ctrl2=`grep "${celltype}" ${input} | cut -f6 | sort | uniq`; rep2=`grep "${celltype}" ${input} | cut -f9 | sort | uniq`; ctrl3=`grep "${celltype}" ${input} | cut -f7 | sort | uniq`; rep3=`grep "${celltype}" ${input} | cut -f10 | sort | uniq`; echo "mageck count --sgrna-len ${guidelen} --norm-method median -l ${librarytsv} -n ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates --sample-label ${celltype},CTRL --fastq ${rep1},${rep2},${rep3} ${ctrl1},${ctrl2},${ctrl3}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "Rscript ${out_path_step032_MAGeCK}/${celltype}_median-all-replicates.count_report.Rmd" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK test at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+# [--gene-lfc-method {median,alphamedian,mean,alphamean,secondbest}]
+cut -f1 ${input} | sort | uniq | while read celltype; do negativectrl=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; countfile=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; stem=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; echo "mageck test --pdf-report --control-sgrna ${negativectrl} --norm-method control --gene-lfc-method alphamean -k ${countfile} -t ${celltype} -c CTRL -n ${out_path_step041_MAGeCK}/${celltype}_${stem}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read celltype; do negativectrl=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; countfile=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; stem=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; echo "Rscript ${out_path_step041_MAGeCK}/${celltype}_${stem}.report.Rmd" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs
 #................................................
 
 ## Submit PBS jobs 
-ls ${pbs_stem}_*${thislogdate}.pbs | while read pbs; do echo ; echo "#................................................" ; echo "# This is PBS: ${pbs}" ;  echo "#" ; echo "# main command line(s): $(tail -n6 ${pbs} | head -n1)" ; echo "#                       $(tail -n5 ${pbs} | head -n1)" ; echo "#                       $(tail -n2 ${pbs} | head -n1)" ; echo "#                       $(tail -n1 ${pbs})" ; echo "#" ; echo "# now submitting PBS" ; echo "qsub ${pbs}" ; qsub ${pbs} ; echo "#................................................" ; done
+ls ${pbs_stem}_*${thislogdate}.pbs | while read pbs; do echo ; echo "#................................................" ; echo "# This is PBS: ${pbs}" ;  echo "#" ; echo "# main command line(s): $(tail -n2 ${pbs} | head -n1)" ; echo "#                       $(tail -n1 ${pbs})" ; echo "#" ; echo "# now submitting PBS" ; echo "qsub ${pbs}" ; qsub ${pbs} ; echo "#................................................" ; done
 
-date ## Status of all user jobs (including CAMeLS step 032 jobs) at
+date ## Status of all user jobs (including CAMeLS step 041 jobs) at
 qstat -u "$user"
 
 # This will remove $VARNAMES from output file with the actual $VARVALUE
@@ -322,7 +278,7 @@ sed -i 's,${thislogdate},'"${thislogdate}"',g' "$logfile"
 sed -i 's,${user},'"${user}"',g' "$logfile"
 sed -i 's,${module_mageck},'"${module_mageck}"',g' "$logfile"
 sed -i 's,${module_rstudio},'"${module_rstudio}"',g' "$logfile"
-sed -i 's,${out_path_step032_MAGeCK},'"${out_path_step032_MAGeCK}"',g' "$logfile"
+sed -i 's,${out_path_step041_MAGeCK},'"${out_path_step041_MAGeCK}"',g' "$logfile"
 sed -i 's,${logfile},'"${logfile}"',g' "$logfile"
 sed -n -e :a -e '1,3!{P;N;D;};N;ba' $logfile > tmp ; mv tmp $logfile
 set +v
