@@ -6,7 +6,7 @@ echo "
 Written by Isabela Almeida
 Based on CASE by Maina Bitar
 Created on September 25, 2025
-Last modified on September 26, 2025
+Last modified on September 29, 2025
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 041 of the
@@ -203,57 +203,57 @@ set -v
 #................................................
 
 ## Write PBS header
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#!/bin/sh" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "##########################################################################" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Script:  ${pbs_stem}_${celltype}_${thislogdate}.pbs" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Author:  Isabela Almeida" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Created: ${human_thislogdate} at QIMR Berghofer (Brisbane, Australia) - VSC" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Updated: ${human_thislogdate} at QIMR Berghofer (Brisbane, Australia) - VSC" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Version: v01" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Email:   ${email}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "##########################################################################" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#!/bin/sh" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "##########################################################################" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Script:  ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Author:  Isabela Almeida" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Created: ${human_thislogdate} at QIMR Berghofer (Brisbane, Australia) - VSC" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Updated: ${human_thislogdate} at QIMR Berghofer (Brisbane, Australia) - VSC" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Version: v01" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Email:   ${email}" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "##########################################################################" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
 
 ## Write PBS directives
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#PBS -N ${pbs_stem}_${celltype}_${thislogdate}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#PBS -r n" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#PBS -l mem=${mem}GB,walltime=${walltime},ncpus=${ncpus}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#PBS -m abe" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#PBS -M ${email}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#PBS -N ${pbs_stem}_${celltype}-${stem}_${thislogdate}" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#PBS -r n" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#PBS -l mem=${mem}GB,walltime=${walltime},ncpus=${ncpus}" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#PBS -m abe" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#PBS -M ${email}" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
 
 ## Write directory setting
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Set main working directory" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "## Change to main directory" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo 'cd ${PBS_O_WORKDIR}' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo ; echo "WARNING: The main directory for this run was set to ${PBS_O_WORKDIR}"; echo ' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#................................................" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Set main working directory" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#................................................" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "## Change to main directory" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo 'cd ${PBS_O_WORKDIR}' >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo 'echo ; echo "WARNING: The main directory for this run was set to ${PBS_O_WORKDIR}"; echo ' >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
 
 ## Write load modules
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Load Softwares, Libraries and Modules" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "module load ${module_mageck}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "module load ${module_rstudio}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#................................................" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Load Softwares, Libraries and Modules" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#................................................" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "module load ${module_mageck}" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "module load ${module_rstudio}" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
 
 ## Write PBS command lines
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#  Run step" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "#................................................" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo "" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do echo 'echo "## Run MAGeCK test at" ; date ; echo' >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#................................................" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#  Run step" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "#................................................" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo "" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  echo 'echo "## Run MAGeCK test at" ; date ; echo' >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
 # [--gene-lfc-method {median,alphamedian,mean,alphamean,secondbest}]
-cut -f1 ${input} | sort | uniq | while read celltype; do negativectrl=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; countfile=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; stem=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; echo "mageck test --pdf-report --control-sgrna ${negativectrl} --norm-method control --gene-lfc-method alphamean -k ${countfile} -t ${celltype} -c CTRL -n ${out_path_step041_MAGeCK}/${celltype}_${stem}" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read celltype; do negativectrl=`grep "${celltype}" ${input} | cut -f2 | sort | uniq`; countfile=`grep "${celltype}" ${input} | cut -f3 | sort | uniq`; stem=`grep "${celltype}" ${input} | cut -f4 | sort | uniq`; echo "Rscript -e \"rmarkdown::render('${out_path_step041_MAGeCK}/${celltype}_${stem}.report.Rmd', output_format = 'html_notebook')\"" >> ${pbs_stem}_${celltype}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  negativectrl=`grep "${countfile}" ${input} | cut -f2 | sort | uniq`; echo "mageck test --pdf-report --control-sgrna ${negativectrl} --norm-method control --gene-lfc-method alphamean -k ${countfile} -t ${celltype} -c CTRL -n ${out_path_step041_MAGeCK}/${celltype}_${stem}" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
+cut -f3 ${input} | sort | uniq | while read countfile; do celltype=`grep "${countfile}" ${input} | cut -f1 | sort | uniq`; stem=`grep "${countfile}" ${input} | cut -f4 | sort | uniq`;  negativectrl=`grep "${countfile}" ${input} | cut -f2 | sort | uniq`; echo "Rscript -e \"rmarkdown::render('${out_path_step041_MAGeCK}/${celltype}_${stem}.report.Rmd', output_format = 'html_notebook')\"" >> ${pbs_stem}_${celltype}-${stem}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs
