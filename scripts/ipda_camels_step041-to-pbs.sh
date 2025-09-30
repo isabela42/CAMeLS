@@ -14,7 +14,7 @@ CAMeLS pipeline (CRISPR Analysis Method for Library Screens).
 
 Usage: bash ipda_camels_step041-to-pbs.sh -i "path/to/input/files" -p "PBS stem" -e "email" -m INT -c INT -w "HH:MM:SS"
 
-Resources used for pipeline in-house: -m 5 -c 1 -w "05:00:00"
+Resources used for pipeline in-house: -m 2 -c 1 -w "00:30:00"
 
 ## Input:
 

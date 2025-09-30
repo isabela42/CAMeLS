@@ -38,7 +38,6 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "01:00:00"
 
                             Col6:
                             /path/from/working/dir/to/targets.gtf
-                            
 
                             Col7:
                             library-stem
@@ -195,7 +194,7 @@ set -v
 #................................................
 
 date ## Filter genes passing MAGeCK test FDR# at
-cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f2 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f3 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f5 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`;
+cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f5 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f3 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`;
 
 cat ${file} | awk 'NR==1 {print}; NR>1{if(($5<0.1)||($11<0.1)) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.gene_summary.txt
 cat ${file} | awk 'NR==1 {print}; NR>1{if(($5<0.2)||($11<0.2)) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.gene_summary.txt
@@ -211,16 +210,16 @@ done
 date ## Identify pos/neg/target counts passing MAGeCK test FDR# at
 
 # positives
-cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f2 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f3 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f5 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`; ls ${out_path_step042_summary}/${celltype}_${stem}* | while read stats; do cat ${positive} | while read pos; do mainstats=`echo ${stats} | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`; grep -w "${pos}" ${stats} >> ${out_path_step042_summary}/${mainstats}.positives.txt ; done ; done
+cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f5 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f3 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`; ls ${out_path_step042_summary}/${celltype}_${stem}* | while read stats; do cat ${positive} | while read pos; do mainstats=`echo ${stats} | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`; grep -w "${pos}" ${stats} >> ${out_path_step042_summary}/${mainstats}.positives.txt ; done ; done
 
 # negatives
-cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f2 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f3 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f5 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`; ls ${out_path_step042_summary}/${celltype}_${stem}* | while read stats; do cat ${negative} | while read neg; do mainstats=`echo ${stats} | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`; grep -w "${neg}" ${stats} >> ${out_path_step042_summary}/${mainstats}.negatives.txt ; done ; done
+cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f5 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f3 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`; ls ${out_path_step042_summary}/${celltype}_${stem}* | while read stats; do cat ${negative} | while read neg; do mainstats=`echo ${stats} | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`; grep -w "${neg}" ${stats} >> ${out_path_step042_summary}/${mainstats}.negatives.txt ; done ; done
 
 # targets
-cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f2 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f3 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f5 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`; ls ${out_path_step042_summary}/${celltype}_${stem}* | while read stats; do cat ${target} | while read tar; do mainstats=`echo ${stats} | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`; grep -w "${tar}" ${stats} >> ${out_path_step042_summary}/${mainstats}.targets.txt ; grep -w "${tar}" ${gtf} >> ${out_path_step042_summary}/${mainstats}.targets.gtf; done ; done
+cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f5 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f3 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`; ls ${out_path_step042_summary}/${celltype}_${stem}* | while read stats; do cat ${target} | while read tar; do mainstats=`echo ${stats} | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`; grep -w "${tar}" ${stats} >> ${out_path_step042_summary}/${mainstats}.targets.txt ; grep -w "${tar}" ${gtf} >> ${out_path_step042_summary}/${mainstats}.targets.gtf; done ; done
 
 date ## Write summary counts passing MAGeCK test FDR# to TSV at
-cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f2 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f3 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f5 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; library=`grep "${file}" ${input} | cut -f7 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`;
+cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f5 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f3 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; library=`grep "${file}" ${input} | cut -f7 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | rev | cut -d'_' -f2`;
 
 # all counts
 grossFDR0p1=`tail -n+2 ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.gene_summary.txt | wc -l`;
