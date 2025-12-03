@@ -122,7 +122,9 @@ logfile=logfile_ipda_camels051-to-pbs_${thislogdate}.txt
 module_mageck="conda-envs/mageck-0.5.9.5"
 
 # Rstudio
-module_rstudio="rstudio/R-3.6.2"
+module_rstudio="rstudio/R-4.5.0"
+#module_rstudio="rstudio/R-3.6.2"
+# BiocManager::install("MAGeCKFlute")
 
 #................................................
 #  Set and create output path
