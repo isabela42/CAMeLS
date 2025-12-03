@@ -122,7 +122,7 @@ logfile=logfile_ipda_camels051-to-pbs_${thislogdate}.txt
 module_mageck="conda-envs/mageck-0.5.9.5"
 
 # Rstudio
-module_rstudio="rstudio/R-4.5.0"
+module_rstudio="rstudio/R-3.6.2"
 
 #................................................
 #  Set and create output path
@@ -425,7 +425,7 @@ cut -f1 ${input} | sort | uniq | while read stem; do echo "#  Run step" >> ${pbs
 cut -f1 ${input} | sort | uniq | while read stem; do echo "#................................................" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read stem; do echo 'echo "## Run MAGeCK Flute at" ; date ; echo' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.R; done
+cut -f1 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read stem; do echo "Rscript -e \"rmarkdown::render('${out_path_step051_MAGeCK}/${stem}.Rmd', output_format = 'html_notebook')\"" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 #................................................
