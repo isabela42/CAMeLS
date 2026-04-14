@@ -227,7 +227,7 @@ cut -f2 ${input} | sort | uniq | while read stem; do file=`echo "$(basename "${p
 cut -f2 ${input} | sort | uniq | while read stem; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "#  Load Softwares, Libraries and Modules" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "#................................................" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f2 ${input} | sort | uniq | while read stem; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "#${module_R}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f2 ${input} | sort | uniq | while read stem; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "${module_R}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 ## Write PBS command lines
