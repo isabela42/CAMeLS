@@ -112,6 +112,13 @@ human_thislogdate=`date`
 logfile=logfile_ipda_camels023-to-pbs_${thislogdate}.txt
 
 #................................................
+#  Required modules, softwares and libraries
+#................................................
+
+# R 4.5.0
+module_R="R/4.5.0"
+
+#................................................
 #  Set and create output path
 #................................................
 
@@ -215,6 +222,15 @@ cut -f2 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${st
 cut -f2 ${input} | sort | uniq | while read stem; do echo 'echo ; echo "WARNING: The main directory for this run was set to ${PBS_O_WORKDIR}"; echo ' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
+## Write load modules
+cut -f1 ${input} | sort | uniq | while read path_file; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "#................................................" >> ${pbs_stem}_${file}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read path_file; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "#  Load Softwares, Libraries and Modules" >> ${pbs_stem}_${file}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read path_file; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "#................................................" >> ${pbs_stem}_${file}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read path_file; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "" >> ${pbs_stem}_${file}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read path_file; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "#${module_R}" >> ${pbs_stem}_${file}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read path_file; do file=`echo "$(basename "${path_file%%.*}" | sed 's/\(.*\)\..*/\1/')" | sed 's/\*//g'` ; echo "" >> ${pbs_stem}_${file}_${thislogdate}.pbs; done
+
+
 ## Write PBS command lines
 cut -f2 ${input} | sort | uniq | while read stem; do echo "#................................................" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do echo "#  Run step" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
@@ -244,6 +260,7 @@ sed -i 's,${walltime},'"${walltime}"',g' "$logfile"
 sed -i 's,${human_thislogdate},'"${human_thislogdate}"',g' "$logfile"
 sed -i 's,${thislogdate},'"${thislogdate}"',g' "$logfile"
 sed -i 's,${user},'"${user}"',g' "$logfile"
+sed -i 's,${module_R},'"${module_R}"',g' "$logfile"
 sed -i 's,${out_path_step023_R},'"${out_path_step023_R}"',g' "$logfile"
 sed -i 's,${logfile},'"${logfile}"',g' "$logfile"
 sed -n -e :a -e '1,3!{P;N;D;};N;ba' $logfile > tmp ; mv tmp $logfile
