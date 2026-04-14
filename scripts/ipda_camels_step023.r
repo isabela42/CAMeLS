@@ -1,4 +1,7 @@
 args <- commandArgs(trailingOnly = TRUE)
+input_table <- args[which(args == "--input") + 1]
+outdir <- args[which(args == "--outdir") + 1]
+outstem <- args[which(args == "--outstem") + 1]
 
 print_help <- function() {
   cat("
@@ -45,9 +48,6 @@ library(ineq)
 library(viridis)
 
 ## Set input/output paths
-input_table <- args[which(args == "--input") + 1]
-outdir <- args[which(args == "--outdir") + 1]
-outstem <- args[which(args == "--outstem") + 1]
 out_rankplot <- file.path(outdir, paste0(outstem, ".rankabundance.pdf"))
 out_histplot <- file.path(outdir, paste0(outstem, ".histogram.pdf"))
 out_lorenzgini <- file.path(outdir, paste0(outstem, ".lorenzcurvegini.pdf"))
