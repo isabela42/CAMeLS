@@ -236,7 +236,7 @@ cut -f2 ${input} | sort | uniq | while read stem; do echo "#  Run step" >> ${pbs
 cut -f2 ${input} | sort | uniq | while read stem; do echo "#................................................" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do echo 'echo "## Run R script at" ; date ; echo' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f2 ${input} | sort | uniq | while read stem; do inputfile=`grep "${stem}" ${input} | cut -f1 | sort | uniq`; rscript=`grep "${stem}" ${inputfile} | cut -f3 | sort | uniq`; echo "Rscript ${rscript} --input ${input} --outdir ${out_path_step023_R} --outstem plasmid-representation_riskoc" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f2 ${input} | sort | uniq | while read stem; do inputfile=`grep "${stem}" ${input} | cut -f1 | sort | uniq`; rscript=`grep "${stem}" ${input} | cut -f3 | sort | uniq`; echo "Rscript ${rscript} --input ${inputfile} --outdir ${out_path_step023_R} --outstem plasmid-representation_riskoc" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs
