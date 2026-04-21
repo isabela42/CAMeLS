@@ -6,7 +6,7 @@ echo "
 Written by Isabela Almeida
 Based on CASE by Maina Bitar
 Created on September 26, 2025
-Last modified on September 26, 2025
+Last modified on Apr 21, 2026
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 034 of the

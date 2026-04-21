@@ -4,7 +4,7 @@ usage(){
 echo "
 Written by Isabela Almeida
 Created on September 26, 2025
-Last modified on September 30, 2025
+Last modified on Apr 21, 2026
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 042 of the
@@ -67,7 +67,7 @@ PBS files                   PBS files created
 Pipeline description:
 
 #   010 Quality check sequencing (1FastQC, 2MultiQC)
-#   020 Plasmid-representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV)
+#   020 Guide representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV, 3R plot results)
 #   030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary replicates; 4Bash - summary combined)
 #-->040 Statistical test (1MAGeCK; 2Bash summary)
 #   050 Plot results (1MAGeCK)

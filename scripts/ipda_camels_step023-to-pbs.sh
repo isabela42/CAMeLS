@@ -5,7 +5,7 @@ usage(){
 echo "
 Written by Isabela Almeida
 Created on Apr 15, 2026
-Last modified on Apr 15, 2026
+Last modified on Apr 21, 2026
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 023 of the
@@ -21,7 +21,7 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "00:30:00"
                             directory. This TSV file should contain:
                             
                             Col1:
-                            /path/from/working/dir/to/camels022_plasmid-rep_BASH_DATE/plasmid-representation_riskoc_per-target.tsv
+                            /path/from/working/dir/to/camels022_guide-rep_BASH_DATE/guide-representation_riskoc_per-target.tsv
 
                             Col2:
                             out_stem
@@ -47,7 +47,7 @@ PBS files                   PBS files created
 Pipeline description:
 
 #   010 Quality check sequencing (1FastQC, 2MultiQC)
-#-->020 Plasmid-representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV, 3R plot results)
+#-->020 Guide representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV, 3R plot results)
 #   030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary replicates; 4Bash - summary combined)
 #   040 Statistical test (1MAGeCK; 2Bash summary)
 #   050 Plot results (1MAGeCK)
@@ -123,7 +123,7 @@ module_R="R/4.5.0"
 #................................................
 
 ## Set stem for output directories
-out_path_step023_R="camels023_plasmid-rep-plots_R_${thislogdate}"
+out_path_step023_R="camels023_guide-rep-plots_R_${thislogdate}"
 
 ## Create output directories
 mkdir -p ${out_path_step023_R}

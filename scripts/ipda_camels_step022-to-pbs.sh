@@ -6,7 +6,7 @@ echo "
 Written by Isabela Almeida
 Based on CASE by Maina Bitar
 Created on May 21, 2025
-Last modified on September 26, 2025
+Last modified on Apr 21, 2026
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 022 of the
@@ -25,13 +25,13 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "00:30:00"
                             stem-library-name
 
                             Col2:
-                            /path/from/working/dir/to/camels021_plasmid-rep_BBDuk_DATE/perfect-*-match_stats_replicate1
+                            /path/from/working/dir/to/camels021_guide-rep_BBDuk_DATE/perfect-*-match_stats_replicate1
 
                             Col3:
-                            /path/from/working/dir/to/camels021_plasmid-rep_BBDuk_DATE/perfect-*-match_stats_replicate2
+                            /path/from/working/dir/to/camels021_guide-rep_BBDuk_DATE/perfect-*-match_stats_replicate2
 
                             Col4:
-                            /path/from/working/dir/to/camels021_plasmid-rep_BBDuk_DATE/perfect-*-match_stats_replicate3
+                            /path/from/working/dir/to/camels021_guide-rep_BBDuk_DATE/perfect-*-match_stats_replicate3
 
                             Col5:
                             /path/from/working/dir/to/library.fasta
@@ -53,7 +53,7 @@ PBS files                   PBS files created
 Pipeline description:
 
 #   010 Quality check sequencing (1FastQC, 2MultiQC)
-#-->020 Plasmid-representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV)
+#-->020 Guide representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV, 3R plot results)
 #   030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary replicates; 4Bash - summary combined)
 #   040 Statistical test (1MAGeCK; 2Bash summary)
 #   050 Plot results (1MAGeCK)
@@ -122,7 +122,7 @@ logfile=logfile_ipda_camels022-to-pbs_${thislogdate}.txt
 #................................................
 
 ## Set stem for output directories
-out_path_step022_BASH="camels022_plasmid-rep_BASH_${thislogdate}"
+out_path_step022_BASH="camels022_guide-rep_BASH_${thislogdate}"
 
 ## Create output directories
 mkdir -p ${out_path_step022_BASH}
@@ -227,11 +227,11 @@ cut -f1 ${input} | sort | uniq | while read stem; do echo "#  Run step" >> ${pbs
 cut -f1 ${input} | sort | uniq | while read stem; do echo "#................................................" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read stem; do echo 'echo "## Write counts to TSV at" ; date ; echo' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read stem; do libraryfasta=`grep "${stem}" ${input} | cut -f5 | sort | uniq`; r1=`grep "${stem}" ${input} | cut -f2`; r2=`grep "${stem}" ${input} | cut -f3`; r3=`grep "${stem}" ${input} | cut -f4`; echo "echo -e \"target\trep1-counts\trep-1-perc\trep2-counts\trep-2-perc\trep3-counts\trep-3-perc\" > ${out_path_step022_BASH}/plasmid-representation_${stem}_per-target.tsv; grep \"^>\" ${libraryfasta} | cut -c 2- | while read target; do r1c=\`grep -w \"\${target}\" ${r1} | cut -f2\`; r1p=\`grep -w \"\${target}\" ${r1} | cut -f3\`; r2c=\`grep -w \"\${target}\" ${r2} | cut -f2\`; r2p=\`grep -w \"\${target}\" ${r2} | cut -f3\`; r3c=\`grep -w \"\${target}\" ${r3} | cut -f2\`; r3p=\`grep -w \"\${target}\" ${r3} | cut -f3\`; if [ -z \"\${r1c}\" ]; then r1c=NA ; fi ; if [ -z \"\${r1p}\" ]; then r1c=NA ; fi ; if [ -z \"\${r2c}\" ]; then r1c=NA ; fi ; if [ -z \"\${r2p}\" ]; then r1c=NA ; fi ; if [ -z \"\${r3c}\" ]; then r1c=NA ; fi ; if [ -z \"\${r3p}\" ]; then r1c=NA ; fi ; echo -e \"\${target}\t\${r1c}\t\${r1p}\t\${r2c}\t\${r2p}\t\${r3c}\t\${r3p}\" >> ${out_path_step022_BASH}/plasmid-representation_${stem}_per-target.tsv ; done" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read stem; do libraryfasta=`grep "${stem}" ${input} | cut -f5 | sort | uniq`; r1=`grep "${stem}" ${input} | cut -f2`; r2=`grep "${stem}" ${input} | cut -f3`; r3=`grep "${stem}" ${input} | cut -f4`; echo "echo -e \"target\trep1-counts\trep-1-perc\trep2-counts\trep-2-perc\trep3-counts\trep-3-perc\" > ${out_path_step022_BASH}/guide-representation_${stem}_per-target.tsv; grep \"^>\" ${libraryfasta} | cut -c 2- | while read target; do r1c=\`grep -w \"\${target}\" ${r1} | cut -f2\`; r1p=\`grep -w \"\${target}\" ${r1} | cut -f3\`; r2c=\`grep -w \"\${target}\" ${r2} | cut -f2\`; r2p=\`grep -w \"\${target}\" ${r2} | cut -f3\`; r3c=\`grep -w \"\${target}\" ${r3} | cut -f2\`; r3p=\`grep -w \"\${target}\" ${r3} | cut -f3\`; if [ -z \"\${r1c}\" ]; then r1c=NA ; fi ; if [ -z \"\${r1p}\" ]; then r1c=NA ; fi ; if [ -z \"\${r2c}\" ]; then r1c=NA ; fi ; if [ -z \"\${r2p}\" ]; then r1c=NA ; fi ; if [ -z \"\${r3c}\" ]; then r1c=NA ; fi ; if [ -z \"\${r3p}\" ]; then r1c=NA ; fi ; echo -e \"\${target}\t\${r1c}\t\${r1p}\t\${r2c}\t\${r2p}\t\${r3c}\t\${r3p}\" >> ${out_path_step022_BASH}/guide-representation_${stem}_per-target.tsv ; done" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f1 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 cut -f1 ${input} | sort | uniq | while read stem; do echo 'echo "## Write overal counts report at" ; date ; echo' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read stem; do libraryfasta=`grep "${stem}" ${input} | cut -f5 | sort | uniq`; librarysize=`grep -c "^>" ${libraryfasta}`; r1=`grep "${stem}" ${input} | cut -f2`; r2=`grep "${stem}" ${input} | cut -f3`; r3=`grep "${stem}" ${input} | cut -f4`; echo "echo -e \"Replicate#\tcounts>=200\tperc>=200\tcount-undetected\tperc-undetected\" > ${out_path_step022_BASH}/plasmid-representation_${stem}_full-library.tsv; rep1c=\`tail -n+5 ${r1} | awk '\$2>=200{c++} END{print c+0}'\` ; rep2c=\`tail -n+5 ${r2} | awk '\$2>=200{c++} END{print c+0}'\` ; rep3c=\`tail -n+5 ${r3} | awk '\$2>=200{c++} END{print c+0}'\` ; rep1p=\`awk -v r1c=\"\$rep1c\" -v t=\"$librarysize\" 'BEGIN { print (r1c / t) * 100 }'\` ; rep2p=\`awk -v r2c=\"\$rep2c\" -v t=\"$librarysize\" 'BEGIN { print (r2c / t) * 100 }'\` ; rep3p=\`awk -v r3c=\"\$rep3c\" -v t=\"$librarysize\" 'BEGIN { print (r3c / t) * 100 }'\` ; rep1t=\`tail -n+5 ${r1} | awk 'END{print NR}'\`; rep2t=\`tail -n+5 ${r2} | awk 'END{print NR}'\`; rep3t=\`tail -n+5 ${r3} | awk 'END{print NR}'\`; rep1u=\`awk -v r1t=\"\$rep1t\" -v t=\"$librarysize\" 'BEGIN { print t - r1t }'\` ; rep2u=\`awk -v r2t=\"\$rep2t\" -v t=\"$librarysize\" 'BEGIN { print t - r2t }'\` ; rep3u=\`awk -v r3t=\"\$rep3t\" -v t=\"$librarysize\" 'BEGIN { print t - r3t }'\` ; rep1up=\`awk -v r1u=\"\$rep1u\" -v t=\"$librarysize\" 'BEGIN { print (r1u / t) * 100 }'\` ; rep2up=\`awk -v r2u=\"\$rep2u\" -v t=\"$librarysize\" 'BEGIN { print (r2u / t) * 100 }'\` ; rep3up=\`awk -v r3u=\"\$rep3u\" -v t=\"$librarysize\" 'BEGIN { print (r3u / t) * 100 }'\` ; echo -e \"Replicate1\t\${rep1c}\t\${rep1p}\t\${rep1u}\t\${rep1up}\nReplicate2\t\${rep2c}\t\${rep2p}\t\${rep2u}\t\${rep2up}\nReplicate3\t\${rep3c}\t\${rep3p}\t\${rep3u}\t\${rep3up}\" >> ${out_path_step022_BASH}/plasmid-representation_${stem}_full-library.tsv" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read stem; do libraryfasta=`grep "${stem}" ${input} | cut -f5 | sort | uniq`; librarysize=`grep -c "^>" ${libraryfasta}`; r1=`grep "${stem}" ${input} | cut -f2`; r2=`grep "${stem}" ${input} | cut -f3`; r3=`grep "${stem}" ${input} | cut -f4`; echo "echo -e \"Replicate#\tcounts>=200\tperc>=200\tcount-undetected\tperc-undetected\" > ${out_path_step022_BASH}/guide-representation_${stem}_full-library.tsv; rep1c=\`tail -n+5 ${r1} | awk '\$2>=200{c++} END{print c+0}'\` ; rep2c=\`tail -n+5 ${r2} | awk '\$2>=200{c++} END{print c+0}'\` ; rep3c=\`tail -n+5 ${r3} | awk '\$2>=200{c++} END{print c+0}'\` ; rep1p=\`awk -v r1c=\"\$rep1c\" -v t=\"$librarysize\" 'BEGIN { print (r1c / t) * 100 }'\` ; rep2p=\`awk -v r2c=\"\$rep2c\" -v t=\"$librarysize\" 'BEGIN { print (r2c / t) * 100 }'\` ; rep3p=\`awk -v r3c=\"\$rep3c\" -v t=\"$librarysize\" 'BEGIN { print (r3c / t) * 100 }'\` ; rep1t=\`tail -n+5 ${r1} | awk 'END{print NR}'\`; rep2t=\`tail -n+5 ${r2} | awk 'END{print NR}'\`; rep3t=\`tail -n+5 ${r3} | awk 'END{print NR}'\`; rep1u=\`awk -v r1t=\"\$rep1t\" -v t=\"$librarysize\" 'BEGIN { print t - r1t }'\` ; rep2u=\`awk -v r2t=\"\$rep2t\" -v t=\"$librarysize\" 'BEGIN { print t - r2t }'\` ; rep3u=\`awk -v r3t=\"\$rep3t\" -v t=\"$librarysize\" 'BEGIN { print t - r3t }'\` ; rep1up=\`awk -v r1u=\"\$rep1u\" -v t=\"$librarysize\" 'BEGIN { print (r1u / t) * 100 }'\` ; rep2up=\`awk -v r2u=\"\$rep2u\" -v t=\"$librarysize\" 'BEGIN { print (r2u / t) * 100 }'\` ; rep3up=\`awk -v r3u=\"\$rep3u\" -v t=\"$librarysize\" 'BEGIN { print (r3u / t) * 100 }'\` ; echo -e \"Replicate1\t\${rep1c}\t\${rep1p}\t\${rep1u}\t\${rep1up}\nReplicate2\t\${rep2c}\t\${rep2p}\t\${rep2u}\t\${rep2up}\nReplicate3\t\${rep3c}\t\${rep3p}\t\${rep3u}\t\${rep3up}\" >> ${out_path_step022_BASH}/guide-representation_${stem}_full-library.tsv" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs
