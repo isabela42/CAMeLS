@@ -5,7 +5,7 @@ usage(){
 echo "
 Written by Isabela Almeida
 Created on Sep 15, 2025
-Last modified on Apr 21, 2026
+Last modified on Apr 23, 2026
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 033 of the
@@ -46,6 +46,9 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "00:30:00"
 
                             Col9:
                             /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_step030.r
+
+                            Col10:
+                            /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_rfunctions.r
 
                             It does not matter if same stem 
                             appears more than once on this input file.
@@ -242,7 +245,7 @@ cut -f1 ${input} | sort | uniq | while read stem; do libraryfasta=`grep "${stem}
 cut -f1 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 cut -f1 ${input} | sort | uniq | while read stem; do echo 'echo "## Plot results at" ; date ; echo' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read stem; do rscript=`grep "${stem}" ${input} | cut -f9 | sort | uniq`; echo "Rscript ${rscript} --input ${out_path_step033_summary}/${stem}_per-target.tsv --outdir ${out_path_step033_summary} --outstem ${stem}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read stem; do rscript=`grep "${stem}" ${input} | cut -f9 | sort | uniq`; rfunctions=`grep "${stem}" ${input} | cut -f10 | sort | uniq`; echo "Rscript ${rscript} --input ${out_path_step033_summary}/${stem}_per-target.tsv --outdir ${out_path_step033_summary} --outstem ${stem} --function ${rfunctions}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs

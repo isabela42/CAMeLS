@@ -5,7 +5,7 @@ usage(){
 echo "
 Written by Isabela Almeida
 Created on Apr 15, 2026
-Last modified on Apr 21, 2026
+Last modified on Apr 23, 2026
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 023 of the
@@ -29,6 +29,9 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "00:30:00"
 
                             Col3:
                             /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_step023.r
+
+                            Col4:
+                            /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_rfunctions.r
 
                             It does not matter if same stem 
                             appears more than once on this input file.
@@ -236,7 +239,7 @@ cut -f2 ${input} | sort | uniq | while read stem; do echo "#  Run step" >> ${pbs
 cut -f2 ${input} | sort | uniq | while read stem; do echo "#................................................" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 cut -f2 ${input} | sort | uniq | while read stem; do echo 'echo "## Run R script at" ; date ; echo' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f2 ${input} | sort | uniq | while read stem; do inputfile=`grep "${stem}" ${input} | cut -f1 | sort | uniq`; rscript=`grep "${stem}" ${input} | cut -f3 | sort | uniq`; echo "Rscript ${rscript} --input ${inputfile} --outdir ${out_path_step023_R} --outstem ${stem}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f2 ${input} | sort | uniq | while read stem; do inputfile=`grep "${stem}" ${input} | cut -f1 | sort | uniq`; rscript=`grep "${stem}" ${input} | cut -f3 | sort | uniq`; rfunctions=`grep "${stem}" ${input} | cut -f4 | sort | uniq`; echo "Rscript ${rscript} --input ${inputfile} --outdir ${out_path_step023_R} --outstem ${stem} --function ${rfunctions}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs
