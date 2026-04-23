@@ -21,7 +21,7 @@
 #   - Does NOT handle file I/O or argument parsing
 #   - Assumes some level of preprocessing is already done
 # ============================================================
-pca_plot <- function(df, script_palette = NULL) {
+pca_plot <- function(df, script_palette) {
   ...
 }
 
@@ -33,7 +33,7 @@ pca_plot <- function(df, script_palette = NULL) {
 # Usage: rank_plot(df, script_palette)
 # ------------------------------------------------------------
 
-rank_plot <- function(df, script_palette = NULL) {
+rank_plot <- function(df, script_palette) {
   rank_df <- df %>%
     group_by(condition) %>%
     arrange(desc(counts)) %>%
@@ -72,7 +72,7 @@ rank_plot <- function(df, script_palette = NULL) {
 # Usage: hist_plot(df, script_palette)
 # ------------------------------------------------------------
 
-hist_plot <- function(df, script_palette = NULL) {
+hist_plot <- function(df, script_palette) {
   plot <- ggplot(df, aes(x = counts, fill = sample_label)) +
   geom_histogram(bins = 50, alpha = 0.7, position = "identity") +
   scale_fill_manual(values = script_palette) +
@@ -101,7 +101,7 @@ hist_plot <- function(df, script_palette = NULL) {
 # Usage: lorenz_gini_plot(df, script_palette)
 # ------------------------------------------------------------
 
-lorenz_gini_plot <- function(df, script_palette = NULL) {
+lorenz_gini_plot <- function(df, script_palette) {
   lorenz_df <- df %>%
     group_by(sample_label) %>%
     do({
@@ -118,17 +118,22 @@ lorenz_gini_plot <- function(df, script_palette = NULL) {
   
   lorenz_df <- lorenz_df %>%
     left_join(gini_labels, by = "sample_label")
+
+  gini_labels_vec <- gini_vals %>%
+  mutate(label = paste0(sample_label, " (Gini=", round(Gini, 3), ")")) %>%
+  { setNames(.$label, .$sample_label) }
   
-  plot <- ggplot(lorenz_df, aes(x = p, y = L, color = label, linetype = label)) +
+  plot <- ggplot(lorenz_df, aes(x = p, y = L, color = sample_label, linetype = sample_label)) +
     geom_line(linewidth = 1.2, alpha = 0.7) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-    scale_color_manual(values = script_palette) +
-    scale_linetype_manual(values = rep(1:12, length.out = length(unique(df$sample_label)))) +
+    scale_color_manual(values = script_palette, labels = gini_labels_vec) +
+    scale_linetype_manual(values = rep(1:12, length.out = length(unique(df$sample_label))), labels = gini_labels_vec) +
     labs(
       title = "Lorenz Curve",
       x = "Cumulative fraction of guides",
       y = "Cumulative fraction of counts",
-      color = "Sample"
+      color = "Sample",
+      linetype = "Sample"
     ) +
     guides(
       color = guide_legend(title = "Sample"),
@@ -302,7 +307,7 @@ pcc_plot <- function(mat_df){
 # Usage: box_plot(df, script_palette)
 # ------------------------------------------------------------
 
-box_plot <- function(df, script_palette = NULL) {
+box_plot <- function(df, script_palette) {
   #merged_df <- df %>%
   #  mutate(group = ifelse(grepl("rep", condition), "Endpoint", "Control")) %>%
   #  mutate(group = factor(group, levels = c("Control", "Endpoint"))) %>%
@@ -337,7 +342,7 @@ box_plot <- function(df, script_palette = NULL) {
 # Usage: violin_plot(df, script_palette)
 # ------------------------------------------------------------
 
-violin_plot <- function(df, script_palette = NULL) {
+violin_plot <- function(df, script_palette) {
   #merged_df <- df %>%
   #  mutate(group = ifelse(grepl("rep", condition), "Endpoint", "Control")) %>%
   #  mutate(group = factor(group, levels = c("Control", "Endpoint"))) %>%
@@ -376,7 +381,7 @@ violin_plot <- function(df, script_palette = NULL) {
 # Usage: pca_plot(df, script_palette)
 # ------------------------------------------------------------
 
-pca_plot <- function(df, script_palette = NULL) {
+pca_plot <- function(df, script_palette) {
   df <- df %>%
     mutate(counts = replace_na(counts, 0))
   df_wide <- df %>%
