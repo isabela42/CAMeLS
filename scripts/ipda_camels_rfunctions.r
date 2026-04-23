@@ -3,7 +3,7 @@
 # ============================================================
 # Written by Isabela Almeida
 # Created on Apr 21, 2026
-# Last modified on Apr 23, 2026
+# Last modified on Apr 24, 2026
 # Version: 1.0.0
 #
 # DESCRIPTION: Plot functions
@@ -28,7 +28,7 @@ pca_plot <- function(df, script_palette = NULL) {
 # ------------------------------------------------------------
 # RANK PLOT
 # Description: Rank-abundance curve of counts per condition/sample
-# Input: df (condition, sample_label, counts), script_palette (opt)
+# Input: df (condition, sample_label, counts), script_palette
 # Output: ggplot object
 # Usage: rank_plot(df, script_palette)
 # ------------------------------------------------------------
@@ -67,7 +67,7 @@ rank_plot <- function(df, script_palette = NULL) {
 # ------------------------------------------------------------
 # HISTOGRAM
 # Description: Distribution of guide counts per sample
-# Input: df (counts, sample_label), script_palette (opt)
+# Input: df (counts, sample_label), script_palette
 # Output: ggplot object
 # Usage: hist_plot(df, script_palette)
 # ------------------------------------------------------------
@@ -96,7 +96,7 @@ hist_plot <- function(df, script_palette = NULL) {
 # ------------------------------------------------------------
 # LORENZ + GINI
 # Description: Inequality of guide distribution per sample
-# Input: df (sample_label, counts), script_palette (opt)
+# Input: df (sample_label, counts), script_palette
 # Output: ggplot object
 # Usage: lorenz_gini_plot(df, script_palette)
 # ------------------------------------------------------------
@@ -119,7 +119,7 @@ lorenz_gini_plot <- function(df, script_palette = NULL) {
   lorenz_df <- lorenz_df %>%
     left_join(gini_labels, by = "sample_label")
   
-  plot <- ggplot(lorenz_df, aes(x = p, y = L, color = sample_label, linetype = sample_label)) +
+  plot <- ggplot(lorenz_df, aes(x = p, y = L, color = label, linetype = label)) +
     geom_line(linewidth = 1.2, alpha = 0.7) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     scale_color_manual(values = script_palette) +
@@ -297,7 +297,7 @@ pcc_plot <- function(mat_df){
 # ------------------------------------------------------------
 # BOX PLOT
 # Description: Log-scale distribution per group
-# Input: df (group, sample_label, counts), palette (opt)
+# Input: df (group, sample_label, counts), script_palette
 # Output: ggplot object
 # Usage: box_plot(df, script_palette)
 # ------------------------------------------------------------
@@ -332,7 +332,7 @@ box_plot <- function(df, script_palette = NULL) {
 # ------------------------------------------------------------
 # VIOLIN PLOT
 # Description: Distribution + median per group
-# Input: df (group, sample_label, counts), palette (opt)
+# Input: df (group, sample_label, counts), script_palette
 # Output: ggplot object
 # Usage: violin_plot(df, script_palette)
 # ------------------------------------------------------------
@@ -371,7 +371,7 @@ violin_plot <- function(df, script_palette = NULL) {
 # ------------------------------------------------------------
 # PCA
 # Description: PCA + variance explained
-# Input: df (target, sample_label, counts), palette (opt)
+# Input: df (target, sample_label, counts), script_palette
 # Output: patchwork (PCA + variance)
 # Usage: pca_plot(df, script_palette)
 # ------------------------------------------------------------
