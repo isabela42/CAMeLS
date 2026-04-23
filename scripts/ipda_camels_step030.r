@@ -8,7 +8,7 @@ print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on Apr 21, 2026
-Last modified on Apr 23, 2026
+Last modified on Apr 24, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
@@ -211,7 +211,7 @@ boxplot <- gridExtra::grid.arrange(boxplot_raw_plot, boxplot_norm_plot, ncol = 2
 print(boxplot)
 ggsave(file.path(out_boxplot),
        plot = boxplot, width = 12, height = 4.5, dpi = 100)
-ggsave(file.path(boxplot_raw_plot),
+ggsave(file.path(out_raw_boxplot),
        plot = boxplot_raw_plot, width = 6, height = 4.5, dpi = 100)
 ggsave(file.path(out_norm_boxplot),
        plot = boxplot_norm_plot, width = 6, height = 4.5, dpi = 100)
