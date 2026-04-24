@@ -8,7 +8,7 @@ print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on Apr 15, 2026
-Last modified on Apr 23, 2026
+Last modified on Apr 24, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
@@ -78,12 +78,13 @@ df_long <- df %>%
     names_pattern = "(rep\\d+)_(counts|perc)"
   ) %>%
   mutate(
-    sample_label = condition
+    sample_label = condition,
+    group = condition
   )
 
 ## Convert to matrix for PCC
 mat <- df %>%
-  select(matches("^(rep)")) %>%
+  select(matches("^rep(?!.*perc)", perl = TRUE)) %>%
   as.matrix()
 
 ## Define palette
