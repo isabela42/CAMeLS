@@ -40,7 +40,7 @@ rank_plot <- function(df, script_palette) {
     mutate(rank = row_number())
   
   plot <- ggplot(rank_df, aes(x = rank, y = counts, color = sample_label, linetype = sample_label)) +
-  geom_line(alpha = 0.7) +
+  geom_line() +
   scale_y_log10() +
   scale_color_manual(values = script_palette) +
   labs(title = "Rank-Abundance Plot",
@@ -124,7 +124,7 @@ lorenz_gini_plot <- function(df, script_palette) {
   { setNames(.$label, .$sample_label) }
   
   plot <- ggplot(lorenz_df, aes(x = p, y = L, color = sample_label, linetype = sample_label)) +
-    geom_line(linewidth = 1.2, alpha = 0.7) +
+    geom_line(linewidth = 1.2) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     scale_color_manual(values = script_palette, labels = gini_labels_vec) +
     scale_linetype_manual(values = rep(1:12, length.out = length(unique(df$sample_label))), labels = gini_labels_vec) +
