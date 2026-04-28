@@ -8,23 +8,23 @@ print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on Apr 21, 2026
-Last modified on Apr 24, 2026
+Last modified on Apr 28, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
 CAMeLS pipeline (CRISPR Analysis Method for Library Screens). 
 
-Usage: Rscript ipda_camels_step030.r [options]
+Usage: Rscript ipda_camels_step033.r [options]
 
 Options:
-  --input FILE        Input TSV file from camels03*_counts*_summary_DATE
+  --input FILE        Input TSV file from camels033_replicate-summary_BASH-R_DATE
   --outdir DIR        Output directory
   --outstem STEM      Output file stem (default: 'cellA-replicates')
   --function FILE     Path to R functions file ipda_camels_rfunctions.r
   --help              Show this help message
 
 Example:
-  Rscript ipda_camels_step030.r --input /path/from/working/dir/to/camels03*_*-summary_BASH-R_DATE/stem_per-target.tsv --outdir /path/from/working/dir/to/camels033_replicate-summary_R_DATE/ --outstem FT194-median-riskoc
+  Rscript ipda_camels_step033.r --input /path/from/working/dir/to/camels033_replicate-summary_BASH-R_DATE/stem_per-target.tsv --outdir /path/from/working/dir/to/camels033_replicate-summary_R_DATE/ --outstem FT194-median-riskoc
 
 Pipeline description:
 
@@ -141,8 +141,8 @@ script_palette <- c(
 source(functions)
 
 ## Rank-abundance plot
-rank_raw_plot <- rank_plot(raw_df, script_palette)
-rank_norm_plot <- rank_plot(norm_df, script_palette)
+rank_raw_plot <- rank_plot(raw_df, script_palette, 500)
+rank_norm_plot <- rank_plot(norm_df, script_palette, 500)
 rank <- gridExtra::grid.arrange(rank_raw_plot, rank_norm_plot, ncol = 2)
 print(rank)
 ggsave(file.path(out_rankplot),
@@ -153,8 +153,8 @@ ggsave(file.path(out_norm_rankplot),
        plot = rank_norm_plot, width = 5.5, height = 4.5, dpi = 100)
 
 ## Histogram (log counts)
-hist_raw_plot <- hist_plot(raw_df, script_palette)
-hist_norm_plot <- hist_plot(norm_df, script_palette)
+hist_raw_plot <- hist_plot(raw_df, script_palette, 500)
+hist_norm_plot <- hist_plot(norm_df, script_palette, 500)
 hist <- gridExtra::grid.arrange(hist_raw_plot, hist_norm_plot, ncol = 2)
 print(hist)
 ggsave(file.path(out_histplot),

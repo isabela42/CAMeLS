@@ -8,7 +8,7 @@ print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on Apr 15, 2026
-Last modified on Apr 24, 2026
+Last modified on Apr 28, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
@@ -98,13 +98,13 @@ script_palette <- c(
 source(functions)
 
 ## Rank-abundance plot
-rank <- rank_plot(df_long, script_palette)
+rank <- rank_plot(df_long, script_palette, 200)
 print(rank)
 ggsave(file.path(out_rankplot),
        plot = rank, width = 5.5, height = 4.5, dpi = 100)
 
 ## Histogram (log counts)
-hist <- hist_plot(df_long, script_palette)
+hist <- hist_plot(df_long, script_palette, 200)
 print(hist)
 ggsave(file.path(out_histplot),
        plot = hist, width = 5.5, height = 4.5, dpi = 100)
