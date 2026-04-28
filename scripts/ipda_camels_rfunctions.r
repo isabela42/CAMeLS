@@ -3,7 +3,7 @@
 # ============================================================
 # Written by Isabela Almeida
 # Created on Apr 21, 2026
-# Last modified on Apr 28, 2026
+# Last modified on Apr 29, 2026
 # Version: 1.0.0
 #
 # DESCRIPTION: Plot functions
@@ -248,6 +248,47 @@ correlation_plot <- function(df, col1, col2, col3, text_title, axis_title){
     )
   
   plot <- gridExtra::grid.arrange(p1, p2, p3, ncol = 3)
+  return(plot)
+}
+
+# ------------------------------------------------------------
+# CORRELATION PLOTS
+# Description: Pairwise log-log scatter comparisons
+# Input: df, col1, col2, col3, text_title, axis_title
+# Output: grid plot (3 panels)
+# Usage: correlation_plot(df, "A","B","C","Title","Axis")
+# ------------------------------------------------------------
+
+correlation2_plot <- function(df, col1, col2, text_title, axis_title){
+  df_pairs <- df %>%
+    select(target, all_of(c(col1, col2)))
+  
+  vals <- df_pairs %>%
+    select(all_of(c(col1, col2))) %>%
+    unlist()
+  lims <- range(vals[vals > 0], na.rm = TRUE)
+  
+  plot <- ggplot(df_pairs, aes(x = .data[[col1]], y = .data[[col2]])) +
+    geom_point(alpha = 0.4, size = 1) +
+    scale_x_log10(limits = lims) +
+    scale_y_log10(limits = lims) +
+    labs(
+      title = paste(text_title, "- 1 vs 2"),
+      x = paste0(axis_title, " 1"),
+      y = paste0(axis_title, " 2")
+    ) +
+    coord_fixed() +
+    theme_grey() +
+    theme(
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      plot.title = element_text(size = 12, face = "bold"),
+      legend.title = element_text(size = 12),
+      legend.text  = element_text(size = 12)
+    )
+
   return(plot)
 }
 
