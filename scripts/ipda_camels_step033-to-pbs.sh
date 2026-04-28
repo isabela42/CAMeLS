@@ -5,7 +5,7 @@ usage(){
 echo "
 Written by Isabela Almeida
 Created on Sep 15, 2025
-Last modified on Apr 23, 2026
+Last modified on Apr 29, 2026
 Version: ${version}
 
 Description: Write and submit PBS jobs for Step 033 of the
@@ -45,7 +45,7 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "00:30:00"
                             /path/from/working/dir/to/library.fasta
 
                             Col9:
-                            /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_step030.r
+                            /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_step033.r
 
                             Col10:
                             /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_rfunctions.r

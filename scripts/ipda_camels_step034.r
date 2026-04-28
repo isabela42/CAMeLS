@@ -8,7 +8,7 @@ print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on Apr 28, 2026
-Last modified on Apr 28, 2026
+Last modified on Apr 29, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
@@ -84,23 +84,19 @@ out_norm_pca <- file.path(outdir, paste0(outstem, ".pca-norm.pdf"))
 ## Import table
 df <- read.delim(input_table, header = TRUE,
                  col.names = c("target",
-                               "rep1_counts","ctrl1_counts",
-                               "rep2_counts","ctrl2_counts",
-                               "rep3_counts","ctrl3_counts",
-                               "normrep1_counts","normctrl1_counts",
-                               "normrep2_counts","normctrl2_counts",
-                               "normrep3_counts","normctrl3_counts"))
+                               "end_counts","ctrl_counts",
+                               "normend_counts","normctrl_counts"))
 
 ## Convert to long format (counts only)
 df_long <- df %>%
   pivot_longer(
     cols = -target,
     names_to = c("norm", "condition", ".value"),
-    names_pattern = "(norm)?((?:rep|ctrl)\\d+)_(counts)"
+    names_pattern = "(norm)?((?:end|ctrl)\\d+)_(counts)"
   ) %>%
   mutate(
     norm = ifelse(is.na(norm) | norm == "", "raw", "norm"),
-    condition = gsub("^rep", "endpoint", condition),
+    condition = gsub("^end", "endpoint", condition),
     group = ifelse(grepl("ctrl", condition), "Control", "Endpoint"),
     replicate = gsub("[a-zA-Z]+", "", condition),
     sample_label = paste(
@@ -115,26 +111,18 @@ df_long <- df %>%
 raw_df <- df_long %>% filter(norm == "raw")
 norm_df <- df_long %>% filter(norm == "norm")
 mat_norm <- df %>%
-  select(matches("^(normrep|normctrl)")) %>%
+  select(matches("^(normend|normctrl)")) %>%
   as.matrix()
 mat_raw <- df %>%
-  select(matches("^(rep|ctrl)")) %>%
+  select(matches("^(end|ctrl)")) %>%
   as.matrix()
 
 ## Define palette
 script_palette <- c(
-  "Raw Ctrl 1" = "#CAE2BC",
-  "Raw Ctrl 2" = "#C7CCB9",
-  "Raw Ctrl 3" = "#B0BC98",
-  "Raw End 1" = "#C6CCD8",
-  "Raw End 2" = "#A9B2C6",
-  "Raw End 3" = "#8E98B3",
-  "Norm Ctrl 1" = "#6F7F62",
-  "Norm Ctrl 2" = "#55674E",
-  "Norm Ctrl 3" = "#3A4E48",
-  "Norm End 1" = "#7A8FB8",
-  "Norm End 2" = "#5C76A3",
-  "Norm End 3" = "#3F5F8F"
+  "Raw Ctrl" = "#C7CCB9",
+  "Raw End" = "#A9B2C6",
+  "Norm Ctrl" = "#55674E",
+  "Norm End" = "#5C76A3"
 )
 
 ## Source functions
@@ -177,20 +165,16 @@ ggsave(file.path(out_norm_lorenzgini),
        plot = lorenz_norm_plot, width = 6, height = 4.5, dpi = 100)
 
 ## Replicate correlation scatter plot
-correl_raw_rep_plot <- correlation_plot(df, "rep1_counts", "rep2_counts", "rep3_counts", "Raw endpoints", "end")
-correl_raw_ctrl_plot <- correlation_plot(df, "ctrl1_counts", "ctrl2_counts", "ctrl3_counts", "Raw controls", "ctrl")
-correl_norm_rep_plot <- correlation_plot(df, "normrep1_counts", "normrep2_counts", "normrep3_counts", "Normalized endpoints", "end")
-correl_norm_ctrl_plot <- correlation_plot(df, "normctrl1_counts", "normctrl2_counts", "normctrl3_counts", "Normalized controls", "ctrl")
-correl <- gridExtra::grid.arrange(correl_raw_rep_plot, correl_raw_ctrl_plot, correl_norm_rep_plot, correl_norm_ctrl_plot, ncol = 2)
-correl_raw <- gridExtra::grid.arrange(correl_raw_rep_plot, correl_raw_ctrl_plot, ncol = 1)
-correl_norm <- gridExtra::grid.arrange(correl_norm_rep_plot, correl_norm_ctrl_plot, ncol = 1)
+correl_raw_plot <- correlation2_plot(df, "end_counts", "ctrl_counts", "Raw endpoints", "end")
+correl_norm_plot <- correlation2_plot(df, "normend_counts", "normctrl_counts", "Normalized endpoints", "end")
+correl <- gridExtra::grid.arrange(correl_raw_plot, correl_norm_plot, ncol = 1)
 print(correl)
 ggsave(file.path(out_correlation),
        plot = correl, width = 22, height = 9, dpi = 100)
 ggsave(file.path(out_raw_correlation),
-       plot = correl_raw, width = 11, height = 9, dpi = 100)
+       plot = correl_raw_plot, width = 11, height = 9, dpi = 100)
 ggsave(file.path(out_norm_correlation),
-       plot = correl_norm, width = 11, height = 9, dpi = 100)
+       plot = correl_norm_plot, width = 11, height = 9, dpi = 100)
 
 ## Pearson correlation coefficient (PCC)
 pcc_raw_plot <- pcc_plot(mat_raw)
