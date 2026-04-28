@@ -3,7 +3,7 @@
 # ============================================================
 # Written by Isabela Almeida
 # Created on Apr 21, 2026
-# Last modified on Apr 24, 2026
+# Last modified on Apr 28, 2026
 # Version: 1.0.0
 #
 # DESCRIPTION: Plot functions
@@ -33,19 +33,23 @@ pca_plot <- function(df, script_palette) {
 # Usage: rank_plot(df, script_palette)
 # ------------------------------------------------------------
 
-rank_plot <- function(df, script_palette) {
+rank_plot <- function(df, script_palette, count_line) {
   rank_df <- df %>%
-    group_by(condition) %>%
+    group_by(sample_label) %>%
     arrange(desc(counts)) %>%
     mutate(rank = row_number())
   
   plot <- ggplot(rank_df, aes(x = rank, y = counts, color = sample_label, linetype = sample_label)) +
   geom_line() +
+  geom_hline(yintercept = count_line, linetype = "dashed", color = "grey50") +
+  annotate("text", x = 1, y = count_line,
+           label = paste0(count_line, " counts"),
+           hjust = 0, vjust = -0.5, size = 3, color = "grey50") +
   scale_y_log10() +
   scale_color_manual(values = script_palette) +
   labs(title = "Rank-Abundance Plot",
        x = "Guide Rank",
-       y = "Counts (log10)",
+       y = "Counts (log10 scale)",
        color = "Sample") +
   guides(
     color = guide_legend(title = "Sample"),
@@ -72,13 +76,17 @@ rank_plot <- function(df, script_palette) {
 # Usage: hist_plot(df, script_palette)
 # ------------------------------------------------------------
 
-hist_plot <- function(df, script_palette) {
+hist_plot <- function(df, script_palette, count_line) {
   plot <- ggplot(df, aes(x = counts, fill = sample_label)) +
   geom_histogram(bins = 50, alpha = 0.7, position = "identity") +
+  geom_vline(xintercept = count_line, linetype = "dashed", color = "grey50") +
+  annotate("text", x = count_line * 1.10, y = Inf,
+           label = paste0(count_line, " counts"),
+           hjust = 0, vjust = 1.5, size = 3, color = "grey50") +
   scale_fill_manual(values = script_palette) +
   scale_x_log10() +
   labs(title = "Distribution of Guide Counts",
-       x = "Counts (log10)",
+       x = "Counts (log10 scale)",
        y = "Frequency") +
   theme_grey() +
   theme(
@@ -112,6 +120,15 @@ lorenz_gini_plot <- function(df, script_palette) {
   gini_vals <- df %>%
     group_by(sample_label) %>%
     summarise(Gini = ineq(counts, type = "Gini"))
+
+  # Identify samples with high Gini
+  high_gini_samples <- gini_vals %>%
+  filter(Gini > 0.4) %>%
+  pull(sample_label)
+
+  # Copy palette and override those samples
+  plot_palette <- script_palette
+  plot_palette[high_gini_samples] <- "red"
   
   gini_labels <- gini_vals %>%
     mutate(label = paste0(sample_label, " (Gini=", round(Gini, 3), ")"))
@@ -126,7 +143,7 @@ lorenz_gini_plot <- function(df, script_palette) {
   plot <- ggplot(lorenz_df, aes(x = p, y = L, color = sample_label, linetype = sample_label)) +
     geom_line(linewidth = 1.2) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-    scale_color_manual(values = script_palette, labels = gini_labels_vec) +
+    scale_color_manual(values = plot_palette, labels = gini_labels_vec) +
     scale_linetype_manual(values = rep(1:12, length.out = length(unique(df$sample_label))), labels = gini_labels_vec) +
     labs(
       title = "Lorenz Curve",
@@ -280,7 +297,7 @@ pcc_plot <- function(mat_df){
     geom_point(aes(size = abs(r), fill = r), shape = 21, color = "grey") +
     geom_text(aes(label = round(r,2)), color = "white", size = 2) +
     scale_size(range = c(6, 8)) +
-    scale_fill_gradientn(colors = c("#440154", "#3B528B", "#21908C")) +
+    scale_fill_gradientn(colors = c("#440154", "white", "#3B528B"), limits = c(-1, 1), oob = scales::squish) +
     guides(
       fill = guide_colourbar(order = 1),
       size = guide_legend(order = 2))+
@@ -318,7 +335,7 @@ box_plot <- function(df, script_palette) {
     scale_fill_manual(values = script_palette) +
     labs(
       title = "Boxplot",
-      y = "Counts (log10)",
+      y = "Counts (log10 scale)",
       fill = "Sample"
     ) +
     theme_grey() +
@@ -357,7 +374,7 @@ violin_plot <- function(df, script_palette) {
     scale_fill_manual(values = script_palette) +
     labs(
       title = "Violin",
-      y = "Counts (log10)",
+      y = "Counts (log10 scale)",
       fill = "Sample"
     ) +
     theme_grey() +
