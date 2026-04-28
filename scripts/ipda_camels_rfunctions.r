@@ -21,9 +21,6 @@
 #   - Does NOT handle file I/O or argument parsing
 #   - Assumes some level of preprocessing is already done
 # ============================================================
-pca_plot <- function(df, script_palette) {
-  ...
-}
 
 # ------------------------------------------------------------
 # RANK PLOT
