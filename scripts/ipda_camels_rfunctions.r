@@ -45,7 +45,7 @@ rank_plot <- function(df, script_palette, count_line) {
   scale_y_log10() +
   scale_color_manual(values = script_palette) +
   labs(title = "Rank-Abundance Plot",
-       x = "Guide Rank",
+       x = "Guide abundance rank",
        y = "Counts (log10 scale)",
        color = "Sample") +
   guides(

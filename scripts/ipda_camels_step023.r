@@ -116,7 +116,7 @@ ggsave(file.path(out_lorenzgini),
        plot = lorenz, width = 6, height = 4.5, dpi = 100)
 
 ## Replicate correlation scatter plot
-correl <- correlation_plot(df, "rep1_counts", "rep2_counts", "rep3_counts", "Guide rep", "Guide rep")
+correl <- correlation_plot(df, "rep1_counts", "rep2_counts", "rep3_counts", "Plasmid rep", "rep")
 print(correl)
 ggsave(file.path(out_correlation),
        plot = correl, width = 11, height = 9, dpi = 100)
