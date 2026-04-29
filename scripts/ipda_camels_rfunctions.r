@@ -254,9 +254,9 @@ correlation_plot <- function(df, col1, col2, col3, text_title, axis_title){
 # ------------------------------------------------------------
 # CORRELATION PLOTS
 # Description: Pairwise log-log scatter comparisons
-# Input: df, col1, col2, col3, text_title, axis_title
-# Output: grid plot (3 panels)
-# Usage: correlation_plot(df, "A","B","C","Title","Axis")
+# Input: df, col1, col2, text_title, axis_title
+# Output: plot
+# Usage: correlation_plot(df, "A","B","Title","Axis")
 # ------------------------------------------------------------
 
 correlation2_plot <- function(df, col1, col2, text_title, axis_title){
@@ -273,9 +273,9 @@ correlation2_plot <- function(df, col1, col2, text_title, axis_title){
     scale_x_log10(limits = lims) +
     scale_y_log10(limits = lims) +
     labs(
-      title = paste(text_title, "- 1 vs 2"),
-      x = paste0(axis_title, " 1"),
-      y = paste0(axis_title, " 2")
+      title = paste(text_title),
+      x = paste0(axis_title, " endpoint counts"),
+      y = paste0(axis_title, " control counts")
     ) +
     coord_fixed() +
     theme_grey() +

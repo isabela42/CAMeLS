@@ -91,18 +91,16 @@ df <- read.delim(input_table, header = TRUE,
 df_long <- df %>%
   pivot_longer(
     cols = -target,
-    names_to = c("norm", "condition", ".value"),
-    names_pattern = "(norm)?((?:end|ctrl)\\d+)_(counts)"
+    names_to = "name",
+    values_to = "counts"
   ) %>%
   mutate(
-    norm = ifelse(is.na(norm) | norm == "", "raw", "norm"),
-    condition = gsub("^end", "endpoint", condition),
-    group = ifelse(grepl("ctrl", condition), "Control", "Endpoint"),
-    replicate = gsub("[a-zA-Z]+", "", condition),
+    norm = ifelse(grepl("^norm", name), "norm", "raw"),
+    condition = ifelse(grepl("ctrl", name), "ctrl", "end"),
+    group = ifelse(condition == "ctrl", "Control", "Endpoint"),
     sample_label = paste(
       ifelse(norm == "raw", "Raw", "Norm"),
       ifelse(group == "Control", "Ctrl", "End"),
-      replicate,
       sep = " "
     )
   )
@@ -164,10 +162,10 @@ ggsave(file.path(out_raw_lorenzgini),
 ggsave(file.path(out_norm_lorenzgini),
        plot = lorenz_norm_plot, width = 6, height = 4.5, dpi = 100)
 
-## Replicate correlation scatter plot
-correl_raw_plot <- correlation2_plot(df, "end_counts", "ctrl_counts", "Raw endpoints", "end")
-correl_norm_plot <- correlation2_plot(df, "normend_counts", "normctrl_counts", "Normalized endpoints", "end")
-correl <- gridExtra::grid.arrange(correl_raw_plot, correl_norm_plot, ncol = 1)
+## Correlation scatter plot
+correl_raw_plot <- correlation2_plot(df, "end_counts", "ctrl_counts", "Raw counts", "raw")
+correl_norm_plot <- correlation2_plot(df, "normend_counts", "normctrl_counts", "Normalized counts", "norm")
+correl <- gridExtra::grid.arrange(correl_raw_plot, correl_norm_plot, ncol = 2)
 print(correl)
 ggsave(file.path(out_correlation),
        plot = correl, width = 22, height = 9, dpi = 100)
