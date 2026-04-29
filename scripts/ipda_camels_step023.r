@@ -8,7 +8,7 @@ print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on Apr 15, 2026
-Last modified on Apr 28, 2026
+Last modified on Apr 29, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
@@ -119,7 +119,7 @@ ggsave(file.path(out_lorenzgini),
 correl <- correlation_plot(df, "rep1_counts", "rep2_counts", "rep3_counts", "Guide rep", "Guide rep")
 print(correl)
 ggsave(file.path(out_correlation),
-       plot = correl, width = 5.5, height = 9, dpi = 100)
+       plot = correl, width = 11, height = 9, dpi = 100)
 
 ## Pearson correlation coefficient (PCC)
 pcc <- pcc_plot(mat)
