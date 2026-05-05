@@ -3,7 +3,7 @@
 # ============================================================
 # Written by Isabela Almeida
 # Created on Apr 21, 2026
-# Last modified on Apr 29, 2026
+# Last modified on May 05, 2026
 # Version: 1.0.0
 #
 # DESCRIPTION: Plot functions
@@ -504,5 +504,51 @@ pca_plot <- function(df, script_palette) {
       plot.title = element_text(size = 12, face = "bold")
     )
   plot <- p_pca / p_var
+  return(plot)
+}
+
+# ------------------------------------------------------------
+# DENSITY PLOT
+# Description: Density of mean sgRNA counts
+# Input: 
+#   df_raw, df_median, df_negctrl (dataframes with target + counts)
+#   script_palette (named vector)
+# Output: ggplot object
+# Usage: density_plot(df_raw, df_median, df_negctrl, script_palette)
+# ------------------------------------------------------------
+
+density_plot <- function(df, script_palette) {
+
+  df <- df %>%
+    filter(is.finite(counts)) %>%
+    mutate(
+      log10_counts = log10(counts + 1),
+      method = factor(method),
+      group = factor(group)
+    )
+
+  plot <- ggplot(df,
+         aes(
+           x = log10_counts,
+           color = method,
+           linetype = method,
+           group = method
+         )) +
+    geom_density(linewidth = 1) +
+    facet_wrap(~group) +
+    scale_color_manual(values = script_palette, name = "Method") +
+    scale_linetype_manual(values = c("solid", "dashed", "dotdash"),
+                          name = "Method") +
+    theme_grey() +
+    theme(
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      plot.title = element_text(size = 12, face = "bold"),
+      legend.title = element_text(size = 12),
+      legend.text  = element_text(size = 12)
+    )
+  
   return(plot)
 }
