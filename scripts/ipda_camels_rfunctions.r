@@ -554,22 +554,60 @@ density_plot <- function(df, script_palette) {
 }
 
 # ------------------------------------------------------------
-# VOLCANO PLOT - FACET
+# VOLCANO PLOT - GUIDE LEVEL
 # Description: Faceted volcano plot showing sig enrichment and depletion
-# Input: df (fdr/lfc columns, type), script_palette
+# Input: df (LFC/FDR columns, type, hit), fdr_cutoff, script_palette
 # Output: ggplot object
-# Usage: volcano_plot(dfa, script_palette)
+# Usage: volcano_plot_guide(df, fdr_cutoff, script_palette)
 # ------------------------------------------------------------
 
-volcano_plot_facet <- function(df, fdr_cutoff, script_palette) {
-  plot <- ggplot(df, aes(x = selected_lfc, y = minus_log10_fdr, col = hit)) +
+volcano_plot_guide <- function(df, fdr_cutoff, script_palette) {
+   plot <- ggplot(df_sgrna_plot, aes(x = LFC, y = -log10(FDR), color = hit)) +
+  geom_point(
+    aes(alpha = alpha_scale)) +
+  geom_hline(yintercept = -log10(fdr_cutoff), linetype = "dashed", color = "grey50") +
+  scale_color_manual(values = script_palette) +
+  facet_wrap(~ type, scales = "free") +
+  scale_size(range = c(0.5, 3)) +
+  scale_alpha(range = c(0.2, 1)) +
+  coord_cartesian(ylim = c(0, 3.5), xlim = c(-2.5, 2.5)) +
+  labs(
+    title = "Volcano Plot - Guide level",
+    x = "Log2 Fold Change",
+    y = expression(-log[10](FDR)),
+    color = "Hits"
+  ) +
+  theme_grey() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    plot.title = element_text(size = 12, face = "bold"),
+    legend.title = element_text(size = 12),
+    legend.text  = element_text(size = 12),
+    strip.text = element_text(size = 12, face = "bold")
+  )
+  return(plot)
+}  
+
+# ------------------------------------------------------------
+# VOLCANO PLOT - GENE LEVEL
+# Description: Faceted volcano plot showing sig enrichment and depletion
+# Input: df (fdr/lfc columns, type, hit), fdr_cutoff, script_palette
+# Output: ggplot object
+# Usage: volcano_plot_gene(df, fdr_cutoff, script_palette)
+# ------------------------------------------------------------
+
+volcano_plot_gene <- function(df, fdr_cutoff, script_palette) {
+  plot <- ggplot(df, aes(x = selected_lfc, y = minus_log10_fdr, color = hit)) +
   geom_point(alpha = 0.7, size = 1.8) +
   geom_hline(yintercept = -log10(fdr_cutoff), linetype = "dashed", color = "grey50") +
   scale_color_manual(values = script_palette) +
   facet_wrap(~ type, scales = "free") +
   coord_cartesian(ylim = c(0, 3.5), xlim = c(-2.5, 2.5)) +
   labs(
-    title = "Volcano Plot",
+    title = "Volcano Plot - Gene level",
     x = "Log2 Fold Change",
     y = expression(-log[10](FDR)),
     color = "Hits"
