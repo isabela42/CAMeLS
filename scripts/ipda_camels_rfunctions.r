@@ -567,7 +567,7 @@ volcano_plot_guide <- function(df, fdr_cutoff, script_palette) {
     aes(alpha = alpha_scale)) +
   geom_hline(yintercept = -log10(fdr_cutoff), linetype = "dashed", color = "grey50") +
   scale_color_manual(values = script_palette) +
-  facet_wrap(~ type, scales = "free") +
+  facet_wrap(~ type,scales = "free", nrow = 1) +
   scale_size(range = c(0.5, 3)) +
   scale_alpha(range = c(0.2, 1)) +
   coord_cartesian(ylim = c(0, 3.5), xlim = c(-2.5, 2.5)) +
@@ -599,12 +599,24 @@ volcano_plot_guide <- function(df, fdr_cutoff, script_palette) {
 # Usage: volcano_plot_gene(df, fdr_cutoff, script_palette)
 # ------------------------------------------------------------
 
-volcano_plot_gene <- function(df, fdr_cutoff, script_palette) {
+volcano_plot_gene <- function(df, fdr_cutoff, label_df, script_palette) {
   plot <- ggplot(df, aes(x = selected_lfc, y = minus_log10_fdr, color = hit)) +
   geom_point(alpha = 0.7, size = 1.8) +
   geom_hline(yintercept = -log10(fdr_cutoff), linetype = "dashed", color = "grey50") +
-  scale_color_manual(values = script_palette) +
-  facet_wrap(~ type, scales = "free") +
+  scale_color_manual(values = script_palette) + 
+  geom_text_repel(
+    data = label_df,
+    aes(label = gene_name),
+    size = 2.5,
+    segment.color = "grey60",
+    segment.size = 0.3,
+    box.padding = 0.4,
+    point.padding = 0.15,
+    min.segment.length = 0,
+    max.overlaps = Inf,
+    show.legend = FALSE
+) +  
+  facet_wrap(~ type, scales = "free", nrow = 1) +
   coord_cartesian(ylim = c(0, 3.5), xlim = c(-2.5, 2.5)) +
   labs(
     title = "Volcano Plot - Gene level",
