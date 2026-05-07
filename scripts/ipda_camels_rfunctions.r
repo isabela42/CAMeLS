@@ -552,3 +552,38 @@ density_plot <- function(df, script_palette) {
   
   return(plot)
 }
+
+# ------------------------------------------------------------
+# VOLCANO PLOT - FACET
+# Description: Faceted volcano plot showing sig enrichment and depletion
+# Input: df (fdr/lfc columns, type), script_palette
+# Output: ggplot object
+# Usage: volcano_plot(dfa, script_palette)
+# ------------------------------------------------------------
+
+volcano_plot_facet <- function(df, fdr_cutoff, script_palette) {
+  plot <- ggplot(df, aes(x = selected_lfc, y = minus_log10_fdr, col = hit)) +
+  geom_point(alpha = 0.7, size = 1.8) +
+  geom_hline(yintercept = -log10(fdr_cutoff), linetype = "dashed", color = "grey50") +
+  scale_color_manual(values = script_palette) +
+  facet_wrap(~ type, scales = "free") +
+  coord_cartesian(ylim = c(0, 3.5), xlim = c(-2.5, 2.5)) +
+  labs(
+    title = "Volcano Plot",
+    x = "Log2 Fold Change",
+    y = expression(-log[10](FDR)),
+    color = "Hits"
+  ) +
+  theme_grey() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    plot.title = element_text(size = 12, face = "bold"),
+    legend.title = element_text(size = 12),
+    legend.text  = element_text(size = 12),
+    strip.text = element_text(size = 12, face = "bold")
+  )
+  return(plot)
+}
