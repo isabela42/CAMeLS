@@ -637,3 +637,34 @@ volcano_plot_gene <- function(df, fdr_cutoff, label_df, script_palette) {
   )
   return(plot)
 }
+
+# ------------------------------------------------------------
+# BOX PLOT SIGNIFICANT HITS
+# Description: Log-scale distribution per group
+# Input: df (group, sample_label, counts), plot_palette
+# Output: ggplot object
+# Usage: signf_boxplot(df, plot_palette)
+# ------------------------------------------------------------
+
+signf_boxplot <- function(df, plot_palette) {
+  plot <- ggplot(df, aes(x = sample_label, y = counts, fill = sample_label)) +
+    geom_boxplot(width = 0.6) +
+    #facet_wrap(~ norm, drop = TRUE) + 
+    scale_y_log10() +
+    scale_fill_manual(values = plot_palette) +
+    labs(
+      title = NULL,
+      y = "Counts (log10 scale)",
+      fill = "Sample"
+    ) +
+    theme_grey() +
+    theme(
+      axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
+      axis.text.y = element_text(size = 12),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 12),
+      plot.title = element_text(size = 12, face = "bold"),
+      legend.position = "none"
+    )
+  return(plot)
+}

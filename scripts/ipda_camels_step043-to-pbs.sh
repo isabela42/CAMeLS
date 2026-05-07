@@ -45,6 +45,12 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "01:00:00"
                             Col7:
                             /path/from/working/dir/to/CAMeLS/scripts/ipda_camels_rfunctions.r
 
+                            Col8:
+                            /path/from/working/dir/to/camels034_combined-summary_BASH-R_DATE/stem_per-target.tsv
+
+                            Col9:
+                            /path/from/working/dir/to/camels033_replicate-summary_BASH-R_DATE/stem_per-target.tsv
+
                             It does not matter if same stem 
                             appears more than once on this input file.
 
@@ -260,7 +266,7 @@ cut -f1 ${input} | sort | uniq | while read stem; do in_stem=`grep "${stem}" ${i
 cut -f1 ${input} | sort | uniq | while read stem; do echo "" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 cut -f1 ${input} | sort | uniq | while read stem; do echo 'echo "## Plot results at" ; date ; echo' >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
-cut -f1 ${input} | sort | uniq | while read stem; do rscript=`grep "${stem}" ${input} | cut -f6 | sort | uniq`; rfunctions=`grep "${stem}" ${input} | cut -f7 | sort | uniq`; echo "Rscript ${rscript} --inputgene ${out_path_step043_summary}/${stem}.gene_summary.full.tsv --inputsgrna ${out_path_step043_summary}/${stem}.sgrna_summary.full.tsv --outdir ${out_path_step043_summary} --outstem ${stem} --function ${rfunctions}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
+cut -f1 ${input} | sort | uniq | while read stem; do rscript=`grep "${stem}" ${input} | cut -f6 | sort | uniq`; rfunctions=`grep "${stem}" ${input} | cut -f7 | sort | uniq`; combined=`grep "${stem}" ${input} | cut -f8 | sort | uniq`; replicates=`grep "${stem}" ${input} | cut -f9 | sort | uniq`; echo "Rscript ${rscript} --inputgene ${out_path_step043_summary}/${stem}.gene_summary.full.tsv --inputsgrna ${out_path_step043_summary}/${stem}.sgrna_summary.full.tsv --inputcomb ${combined} --inputrep ${replicates} --outdir ${out_path_step043_summary} --outstem ${stem} --function ${rfunctions}" >> ${pbs_stem}_${stem}_${thislogdate}.pbs; done
 
 #................................................
 #  Submit PBS jobs

@@ -1,6 +1,8 @@
 args <- commandArgs(trailingOnly = TRUE)
 input_gene <- args[which(args == "--inputgene") + 1]
 input_sgrna <- args[which(args == "--inputsgrna") + 1]
+input_combined <- args[which(args == "--inputcomb") + 1]
+input_replicate <- args[which(args == "--inputrep") + 1]
 outdir <- args[which(args == "--outdir") + 1]
 outstem <- args[which(args == "--outstem") + 1]
 functions <- args[which(args == "--function") + 1]
@@ -18,14 +20,17 @@ CAMeLS pipeline (CRISPR Analysis Method for Library Screens).
 Usage: Rscript ipda_camels_step043.r [options]
 
 Options:
-  --input FILE        Input TSV file from camels043_plots_BASH-R_DATE
+  --inputgene FILE    Input gene summary TSV file from camels043_plots_BASH-R_DATE
+  --inputsgrna FILE   Input sgRNA summary TSV file from camels043_plots_BASH-R_DATE
+  --inputcomb FILE    Input per_target summary TSV file from camels034_combined-summary_BASH-R_DATE
+  --inputrep FILE     Input per_target summary TSV file from camels034_combined-summary_BASH-R_DATE
   --outdir DIR        Output directory
   --outstem STEM      Output file stem (default: 'cellA-replicates')
   --function FILE     Path to R functions file ipda_camels_rfunctions.r
   --help              Show this help message
 
 Example:
-  Rscript ipda_camels_step043.r --inputgene /path/from/working/dir/to/camels043_plots_BASH-R_DATE/stem.gene_summary.full.tsv --inputsgrna /path/from/working/dir/to/camels043_plots_BASH-R_DATE/stem.sgrna_summary.full.tsv --outdir /path/from/working/dir/to/camels043_combined-summary_R_DATE/ --outstem FT194-median-riskoc
+  Rscript ipda_camels_step043.r --inputgene /path/from/working/dir/to/camels043_plots_BASH-R_DATE/stem.gene_summary.full.tsv --inputsgrna /path/from/working/dir/to/camels043_plots_BASH-R_DATE/stem.sgrna_summary.full.tsv --inputcomb /path/from/working/dir/to/camels034_combined-summary_BASH-R_DATE/stem_per-target.tsv --inputrep /path/from/working/dir/to/camels033_replicate-summary_BASH-R_DATE/stem_per-target.tsv --outdir /path/from/working/dir/to/camels043_combined-summary_R_DATE/ --outstem FT194-median-riskoc
 
 Pipeline description:
 
@@ -48,40 +53,62 @@ if (length(args) == 0 || "--help" %in% args) {
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
-
-
-
-library(tidyverse)
-library(ineq)
-library(viridis)
-library(Hmisc)
-library(ggplot2)
-library(dplyr)
 library(tidyr)
-library(ggbeeswarm)
 library(patchwork)
 
-library(tibble)
-
-
 ## Set input/output paths
-input_gene <- "/working/lab_julietF/isabelaA/Project_Risk-OC/screens/proliferation-analysis/camels043_plots_BASH-R_06052026165400AEST/IOSE7576-median-riskoc.gene_summary.full.tsv"
-input_sgrna <- "/working/lab_julietF/isabelaA/Project_Risk-OC/screens/proliferation-analysis/camels043_plots_BASH-R_06052026165400AEST/IOSE7576-median-riskoc.sgrna_summary.full.tsv"
-outdir <- "/working/lab_julietF/isabelaA/Project_Risk-OC/screens/proliferation-analysis/camels043_plots_BASH-R_06052026165400AEST/"
-outstem <- "IOSE7576-median-riskoc"
-functions <- "/working/lab_julietF/isabelaA/scripts/CAMeLS/scripts/ipda_camels_rfunctions.r"
-input_gene <- "/working/lab_julietF/isabelaA/Project_Risk-OC/screens/proliferation-analysis/camels043_plots_BASH-R_06052026165400AEST/FT194-median-riskoc.gene_summary.full.tsv"
-input_sgrna <- "/working/lab_julietF/isabelaA/Project_Risk-OC/screens/proliferation-analysis/camels043_plots_BASH-R_06052026165400AEST/FT194-median-riskoc.sgrna_summary.full.tsv"
-outdir <- "/working/lab_julietF/isabelaA/Project_Risk-OC/screens/proliferation-analysis/camels043_plots_BASH-R_06052026165400AEST/"
-outstem <- "FT194-median-riskoc"
-
 fdr_cutoff <- 0.3
 out_volcanogene <- file.path(outdir, paste0(outstem, ".volcano-gene_summary.pdf"))
 out_volcanosgrna <- file.path(outdir, paste0(outstem, ".volcano-sgrna_summary.pdf"))
+# Significant hit boxplot outputs are defined later
 
 ## Import table
 df_gene <- read.delim(input_gene, header = TRUE)
 df_sgrna <- read.delim(input_sgrna, header = TRUE)
+df_combined <- read.delim(input_combined, header = TRUE,
+                 col.names = c("target",
+                               "end_counts","ctrl_counts",
+                               "normend_counts","normctrl_counts"))
+df_replicate <- read.delim(input_replicate, header = TRUE,
+                 col.names = c("target",
+                               "rep1_counts","ctrl1_counts",
+                               "rep2_counts","ctrl2_counts",
+                               "rep3_counts","ctrl3_counts",
+                               "normrep1_counts","normctrl1_counts",
+                               "normrep2_counts","normctrl2_counts",
+                               "normrep3_counts","normctrl3_counts"))
+
+## Counts for significant hits plotting
+df_combined_long <- df_combined %>%
+  pivot_longer(
+    cols = -target,
+    names_to = "name",
+    values_to = "counts"
+  ) %>%
+  mutate(
+    norm = ifelse(grepl("^norm", name), "norm", "raw"),
+    condition = ifelse(grepl("ctrl", name), "ctrl", "end"),
+    group = ifelse(condition == "ctrl", "Control", "Endpoint"),
+    sample_label = paste(
+      ifelse(norm == "raw", "Raw", "Norm"),
+      ifelse(group == "Control", "Ctrl", "End"),
+      sep = " "
+    )
+  )
+
+df_replicate_long <- df_replicate %>%
+  pivot_longer(
+    cols = -target,
+    names_to = "name",
+    values_to = "counts"
+  ) %>%
+  mutate(
+    norm = ifelse(grepl("^norm", name), "Norm", "Raw"),
+    condition = ifelse(grepl("ctrl", name), "Ctrl", "End"),
+    replicate = gsub(".*?(\\d+).*", "\\1", name),
+    sample_id = paste(condition, replicate, sep = " "),
+    sample_label = paste(norm, sample_id, sep = " ")
+  )
 
 ## Select neg/pos fdr
 df_gene_plot <- df_gene %>%
@@ -163,10 +190,15 @@ df_sgrna_plot$type <- factor(
 )
 
 ## Define palette
+#script_palette <- c(
+# "Negative" = "#00AFBB", 
+#  "Not significant" = "grey", 
+#  "Positive" = "#bb0c00"
+#)
 script_palette <- c(
-  "Negative" = "#00AFBB", 
-  "Not significant" = "grey", 
-  "Positive" = "#bb0c00"
+  "Negative" = "#1F78B4",   # strong blue (enrichment)
+  "Positive" = "#E31A1C",   # strong red (depletion)
+  "Not significant" = "grey80"
 )
 
 ## Source functions
@@ -289,3 +321,83 @@ ggsave(file.path(out_volcanogene),
 volcano_sgrna <- volcano_plot_guide(df_sgrna_plot, fdr_cutoff, script_palette)
 ggsave(file.path(out_volcanosgrna),
        plot = volcano_sgrna, width = 19, height = 4.5 , dpi = 100)
+
+## Boxplots for significant hits
+plot_palette <- c(
+  "Norm Ctrl" = "grey85",
+  "Norm End" = "#3b669a",
+  "Norm Ctrl 1" = "grey85",
+  "Norm End 1" = "#3b669a",
+  "Norm Ctrl 2" = "grey85",
+  "Norm End 2" = "#3b669a",
+  "Norm Ctrl 3" = "grey85",
+  "Norm End 3" = "#3b669a",
+  "Raw Ctrl" = "grey85",
+  "Raw End" = "#3b669a",
+  "Raw Ctrl 1" = "grey85",
+  "Raw End 1" = "#3b669a",
+  "Raw Ctrl 2" = "grey85",
+  "Raw End 2" = "#3b669a",
+  "Raw Ctrl 3" = "grey85",
+  "Raw End 3" = "#3b669a"
+)
+
+sig_hits <- df_gene_plot %>%
+  filter(
+    hit != "Not significant",
+    !type %in% c("neg-ctrl", "pos-ctrl")
+  ) %>%
+  select(gene_name, selected_fdr, hit, type)
+
+output_dir <- paste0(outdir, outstem, "_signf-boxplots")
+dir.create(output_dir, showWarnings = FALSE)
+
+for(i in seq_len(nrow(sig_hits))) {
+  
+  gene <- sig_hits$gene_name[i]
+  fdr  <- signif(sig_hits$selected_fdr[i], 3)
+  hit_type <- sig_hits$hit[i]
+  
+  # Get guides for this gene
+  guides_current_gene <- df_sgrna_plot %>%
+    filter(gene_name == gene) %>%
+    distinct(sgrna) %>%
+    pull(sgrna)
+  
+  # Subset both datasets
+  df_combined_gene <- df_combined_long %>%
+    filter(target %in% guides_current_gene)
+  
+  df_replicate_gene <- df_replicate_long %>%
+    filter(target %in% guides_current_gene)
+  
+  # Skip empty
+  if(nrow(df_combined_gene) == 0 & nrow(df_replicate_gene) == 0) next
+  
+  # Plots
+  p_combined <- signf_boxplot(df_combined_gene, plot_palette)
+  p_replicate <- signf_boxplot(df_replicate_gene, plot_palette)
+  p_combined <- p_combined + labs(tag = "All replicates")
+  p_replicate <- p_replicate + labs(tag = "Replicate level")
+
+  second_line <- df_gene_plot$id[df_gene_plot$gene_name == gene][1]
+
+  plot <- (p_combined | p_replicate) +
+  plot_annotation(
+    title = paste0(
+      outstem, " | ", gene, " | FDR=", fdr, " | ", hit_type,
+      "\n", second_line
+    )
+  ) &
+  theme(plot.tag = element_text(size = 12, face = "bold"))
+  
+  # Safe filename
+  safe_gene <- gsub("[^A-Za-z0-9_-]", "_", gene)
+  
+  file_boxplot <- file.path(
+    output_dir,
+    paste0(outstem, "_", hit_type, "_", safe_gene, ".pdf")
+  )
+  
+  ggsave(file_boxplot, plot, width = 11, height = 4.5)
+}
