@@ -3,7 +3,7 @@
 # ============================================================
 # Written by Isabela Almeida
 # Created on Apr 21, 2026
-# Last modified on May 05, 2026
+# Last modified on May 07, 2026
 # Version: 1.0.0
 #
 # DESCRIPTION: Plot functions
@@ -508,7 +508,7 @@ pca_plot <- function(df, script_palette) {
 }
 
 # ------------------------------------------------------------
-# DENSITY PLOT
+# DENSITY PLOT - NORMALISATION COMPARISON
 # Description: Density of mean sgRNA counts
 # Input: 
 #   df_raw, df_median, df_negctrl (dataframes with target + counts)
