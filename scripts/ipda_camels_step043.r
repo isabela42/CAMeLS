@@ -139,7 +139,7 @@ label_df <- df_gene_plot %>%
   slice_min(selected_fdr, n = 3, with_ties = FALSE) %>%
   ungroup()
 
-write.table(df, file.path(outdir, paste0(outstem, ".gene_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(df_gene_plot, file.path(outdir, paste0(outstem, ".gene_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
 
 #df_geneneg_plot <- df_gene_plot %>%
 #  mutate(selection = "Negative", lfc = neg.lfc, fdr = neg.fdr)
@@ -191,7 +191,7 @@ df_sgrna_plot$type <- factor(
   )
 )
 
-write.table(df, file.path(outdir, paste0(outstem, ".sgrna_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(df_sgrna_plot, file.path(outdir, paste0(outstem, ".sgrna_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
 
 ## Define palette
 #script_palette <- c(
