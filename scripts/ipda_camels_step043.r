@@ -11,7 +11,7 @@ print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on May 07, 2026
-Last modified on May 07, 2026
+Last modified on May 12, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
@@ -139,6 +139,8 @@ label_df <- df_gene_plot %>%
   slice_min(selected_fdr, n = 3, with_ties = FALSE) %>%
   ungroup()
 
+write.table(df, file.path(outdir, paste0(outstem, ".gene_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
+
 #df_geneneg_plot <- df_gene_plot %>%
 #  mutate(selection = "Negative", lfc = neg.lfc, fdr = neg.fdr)
 #df_genepos_plot <- df_gene_plot %>%
@@ -188,6 +190,8 @@ df_sgrna_plot$type <- factor(
     ctrls[ctrls %in% df_sgrna_plot$type]
   )
 )
+
+write.table(df, file.path(outdir, paste0(outstem, ".sgrna_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
 
 ## Define palette
 #script_palette <- c(
