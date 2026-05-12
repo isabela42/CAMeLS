@@ -60,6 +60,9 @@ library(patchwork)
 fdr_cutoff <- 0.3
 out_volcanogene <- file.path(outdir, paste0(outstem, ".volcano-gene_summary.pdf"))
 out_volcanosgrna <- file.path(outdir, paste0(outstem, ".volcano-sgrna_summary.pdf"))
+
+out_volcanocannonic <- file.path(outdir, paste0(outstem, ".volcano-gene_summary.cannonical.pdf"))
+
 # Significant hit boxplot outputs are defined later
 
 ## Import table
@@ -405,3 +408,29 @@ for(i in seq_len(nrow(sig_hits))) {
   
   ggsave(file_boxplot, plot, width = 11, height = 4.5)
 }
+
+## Volcano plot annotate tumour supressor/oncogenes
+tsg_canonical <- c(
+  "TP53","RB1","APC","PTEN","BRCA1","BRCA2","CDKN2A",
+  "NF1","NF2","VHL","SMAD4","ATM","CHEK2","MLH1","MSH2",
+  "MSH6","PMS2","TSC1","TSC2","STK11","CDH1","SMARCB1",
+  "ARID1A","BAP1","ATRX","CHK1","RAD51B"
+)
+
+oncogene_canonical <- c(
+  "MYC","ERBB2","EGFR","KRAS","NRAS","HRAS","ALK","BRAF",
+  "PIK3CA","KIT","MET","RET","MDM2","CCND1","CDK4",
+  "NOTCH1","IDH1","IDH2","JAK2","ABL1","CHD4", "PAX8"
+)
+
+df_gene_plot$cancer_role <- dplyr::case_when(
+  df_gene_plot$gene_name %in% oncogene_canonical ~ "oncogene",
+  df_gene_plot$gene_name %in% tsg_canonical ~ "tumour suppressor",
+  TRUE ~ "none"
+)
+
+label_df_cannonical <- df_gene_plot %>%
+  dplyr::filter(cancer_role != "none")
+volcano_cannonic <- volcano_plot_gene(df_gene_plot, fdr_cutoff, label_df_cannonical, script_palette)
+ggsave(file.path(out_volcanocannonic),
+       plot = volcano_gene, width = 19, height = 4.5 , dpi = 100)
