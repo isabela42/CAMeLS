@@ -433,4 +433,4 @@ label_df_cannonical <- df_gene_plot %>%
   dplyr::filter(cancer_role != "none")
 volcano_cannonic <- volcano_plot_gene(df_gene_plot, fdr_cutoff, label_df_cannonical, script_palette)
 ggsave(file.path(out_volcanocannonic),
-       plot = volcano_gene, width = 19, height = 4.5 , dpi = 100)
+       plot = volcano_cannonic, width = 19, height = 4.5 , dpi = 100)
