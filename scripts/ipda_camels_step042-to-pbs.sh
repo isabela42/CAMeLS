@@ -1,18 +1,15 @@
 #!/bin/bash
-version="1.0.0"
+version="1.1.0"
 usage(){
 echo "
 Written by Isabela Almeida
 Created on September 26, 2025
-Last modified on Apr 21, 2026
+Last modified on Nov 18, 2026
 Version: ${version}
 
-Description: Write and submit PBS jobs for Step 042 of the
-CAMeLS pipeline (CRISPR Analysis Method for Library Screens). 
+Description: Run Step 042 of the CAMeLS pipeline (CRISPR Analysis Method for Library Screens). 
 
-Usage: bash ipda_camels_step042-to-pbs.sh -i "path/to/input/files" -p "PBS stem" -e "email" -m INT -c INT -w "HH:MM:SS"
-
-Resources used for pipeline in-house: -m 1 -c 1 -w "01:00:00"
+Usage: bash ipda_camels_step042-to-pbs.sh -i 'path/to/input/files'
 
 ## Input:
 
@@ -36,33 +33,42 @@ Resources used for pipeline in-house: -m 1 -c 1 -w "01:00:00"
                             /path/from/working/dir/to/targets-id.txt
 
                             Col6:
-                            /path/from/working/dir/to/targets.gtf
+                            library-filtering-stem (run name; letters, digits, . _ - only).
+                            For example:
+                            riskoc-FDR0p1 for library riskoc filtered at FDR 0.1 (col8 fdr, col9 0.1)
+                            riskoc-pval0p05 for library riskoc filtered at p-value 0.05 (col8 pval, col9 0.05)
 
                             Col7:
-                            library-stem
-
-                            Col8:
-                            /path/from/working/dir/to/library.tsv
-                            file with guideid\tguide-sequence\tgene-name
-
-                            Col9:
                             /path/from/working/dir/to/targets-info.tsv
                             containing
                             chr \t start \t end \t id \t score \t strand \t type \t name \t ucsc-location \t notes
 
-                            It does not matter if same stem 
-                            appears more than once on this input file.
+                            Col8:
+                            <fdr|pval>
+                            Which statistic to use for calling significant hits
+                            fdr  -> pos col 11 (pos|fdr),     neg col 5 (neg|fdr)
+                            pval -> pos col 10 (pos|p-value), neg col 4 (neg|p-value)
 
--p <PBS stem>               Stem for PBS file names
--e <email>                  Email for PBS job
--m <INT>                    Memory INT required for PBS job in GB
--c <INT>                    Number of CPUS required for PBS job
--w <HH:MM:SS>               Clock walltime required for PBS job
+                            Col9:
+                            FLOAT
+                            Threshold for calling significant hits
+                            (genes kept if statistic < threshold)
+
+                            Col8 and Col9 must be the same on every
+                            row that shares the same Col6 run name.
+                            The same Col1 file can appear in several
+                            runs. Rows sharing Col1 and Col6 must also
+                            share Cols 2-5 and 7. Exact duplicate rows
+                            are ignored.
 
 ## Output:
 
-logfile.txt                 Logfile with commands executed and date
-PBS files                   PBS files created
+logfile.txt                                       Logfile with commands executed and date
+<run>_<celltype>_<stem>.pos|neg.gene_summary.txt  Genes passing the threshold (pos/neg)
+<...>.gene_summary.posctrl|negctrl|targets.txt    Controls/targets among those genes
+<...>.gene_summary.targets.info.tsv               Col7 info rows for significant targets,
+                                                  with their FDR or p-value appended
+summary_hits-stats-<run>.tsv                      Hit counts per cell type/normalisation
 
 Pipeline description:
 
@@ -103,21 +109,53 @@ set -e
 #................................................
 
 ## Get parameters from command line flags
-while getopts "i:p:e:m:c:w:h:v" flag
+while getopts "i:h:v" flag
 do
     case "${flag}" in
         i) input="${OPTARG}";;       # Input files including path
-        p) pbs_stem="${OPTARG}";;    # Stem for PBS file names
-        e) email="${OPTARG}";;       # Email for PBS job
-        m) mem="${OPTARG}";;         # Memory required for PBS job
-        c) ncpus="${OPTARG}";;       # Number of CPUS required for PBS job
-        w) walltime="${OPTARG}";;    # Clock walltime required for PBS job
         h) Help ; exit;;             # Print Help and exit
         v) echo "${version}"; exit;; # Print version and exit
-        ?) echo script usage: bash ipda_camels_step042-to-pbs.sh -i path/to/input/files -p PBS stem -e email -m INT -c INT -w "HH:MM:SS" >&2
+        ?) echo "script usage: bash ipda_camels_step042-to-pbs.sh -i path/to/input/file.tsv" >&2
            exit;;
     esac
 done
+
+#................................................
+#  Validate statistic/threshold columns (8, 9)
+#................................................
+
+awk -F'\t' '
+{
+    s = tolower($8); t = $9
+    if ($6 !~ /^[A-Za-z0-9._-]+$/) { print "ERROR line " NR ": col6 must contain only letters, digits, . _ - (got \"" $6 "\")" > "/dev/stderr"; bad = 1 }
+    if (s != "fdr" && s != "pval") { print "ERROR line " NR ": col8 must be fdr or pval (got \"" $8 "\")" > "/dev/stderr"; bad = 1 }
+    if (!(t+0 == t && t > 0 && t <= 1)) { print "ERROR line " NR ": col9 must be a number in (0,1] (got \"" t "\")" > "/dev/stderr"; bad = 1 }
+    if (($6 in S) && (S[$6] != s || T[$6] != t)) { print "ERROR line " NR ": conflicting col8/col9 for run " $6 > "/dev/stderr"; bad = 1 }
+    S[$6] = s; T[$6] = t
+}
+END { exit bad }' ${input} || exit 1
+
+#................................................
+#  Helpers
+#................................................
+
+## Unique input rows (cols 1-9, statistic lowercased)
+## Each line it prints is one row to process
+list_runs(){ awk -F'\t' -v OFS='\t' '{print $1,$2,$3,$4,$5,$6,$7,tolower($8),$9}' ${input} | sort -u; }
+
+## Usage: set_stat_vars "fdr|pval" "threshold"
+## Sets: stat, threshold, poscol, negcol, label
+set_stat_vars(){
+    stat="$1"; threshold="$2"
+    case "${stat}" in
+        fdr)  poscol=11; negcol=5; label="FDR";;
+        pval) poscol=10; negcol=4; label="pval";;
+        *)    echo "ERROR: unknown statistic '${stat}'" >&2; exit 1;;
+    esac
+}
+
+## Count data lines in a file (skip header if $2=1); 0 if file missing/empty
+count_hits(){ if [ -s "$1" ]; then awk -v h="$2" 'FNR>h{n++} END{print n+0}' "$1"; else echo 0; fi; }
 
 #................................................
 #  Set Logfile stem
@@ -136,7 +174,7 @@ logfile=logfile_ipda_camels042-to-pbs_${thislogdate}.txt
 #................................................
 
 ## Set stem for output directories
-out_path_step042_summary="camels042_FDR-counts_summary_${thislogdate}"
+out_path_step042_summary="camels042_sig-hits_summary_${thislogdate}"
 
 ## Create output directories
 mkdir -p ${out_path_step042_summary}
@@ -149,14 +187,7 @@ date
 echo "## Executing bash ipda_camels_step042-to-pbs.sh"
 echo "## This execution PID: ${pid}"
 echo
-echo "## Given inputs:"
-echo
-echo "## Input files:                 ${input}"
-echo "## PBS stem:                    ${pbs_stem}"
-echo "## Email for PBS notifications: ${email}"
-echo "## PBS job memory required:     ${mem}"
-echo "## PBS job NCPUS required:      ${ncpus}"
-echo "## PBS job walltime required:   ${walltime}"
+echo "## Given input file:            ${input}"
 echo
 echo "## Outputs created:"
 echo
@@ -181,14 +212,7 @@ date
 echo "## Executing bash ipda_camels_step042-to-pbs.sh"
 echo "## This execution PID: ${pid}"
 echo
-echo "## Given inputs:"
-echo
-echo "## Input files:                 ${input}"
-echo "## PBS stem:                    ${pbs_stem}"
-echo "## Email for PBS notifications: ${email}"
-echo "## PBS job memory required:     ${mem}"
-echo "## PBS job NCPUS required:      ${ncpus}"
-echo "## PBS job walltime required:   ${walltime}"
+echo "## Given input file:            ${input}"
 echo
 echo "## Outputs created:"
 echo
@@ -198,221 +222,69 @@ echo "## This is logfile:             ${logfile}"
 set -v
 
 #................................................
-#  Summary of count reads
+#  Filter results passing threshold
 #................................................
 
-date ## Filter genes passing MAGeCK test FDR# at
-cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f5 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f3 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2`;
-
-cat ${file} | awk 'NR==1 {print}; NR>1{if($11<0.1) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.pos.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($11<0.2) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.pos.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($11<0.3) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.pos.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($11<0.4) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.pos.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($11<0.5) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.pos.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if(($11>=0.5)&&($11<=1)) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.pos.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($11==1) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR1.pos.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($11==0) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0.pos.gene_summary.txt
-
-cat ${file} | awk 'NR==1 {print}; NR>1{if($5<0.1) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.neg.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($5<0.2) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.neg.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($5<0.3) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.neg.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($5<0.4) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.neg.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($5<0.5) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.neg.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if(($5>=0.5)&&($5<=1)) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.neg.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($5==1) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR1.neg.gene_summary.txt
-cat ${file} | awk 'NR==1 {print}; NR>1{if($5==0) {print}}' > ${out_path_step042_summary}/${celltype}_${stem}_FDR0.neg.gene_summary.txt
-
+date ## Filter genes passing user-defined significance threshold at
+list_runs | while IFS=$'\t' read -r file celltype negative positive target run info stat threshold; do
+    stem=$(echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2)
+    set_stat_vars "${stat}" "${threshold}"
+    base=${out_path_step042_summary}/${run}_${celltype}_${stem}
+    echo "## ${run} ${celltype}_${stem}: stat=${stat} threshold=${threshold} pos-col=${poscol} neg-col=${negcol}"
+    awk -F'\t' -v c=${poscol} -v t=${threshold} 'NR==1 || $c < t' ${file} > ${base}.pos.gene_summary.txt
+    awk -F'\t' -v c=${negcol} -v t=${threshold} 'NR==1 || $c < t' ${file} > ${base}.neg.gene_summary.txt
 done
 
-date ## Identify pos/neg/target counts passing MAGeCK test FDR# at
-while read file; do
-    target=$(grep "${file}" ${input} | cut -f5 | sort | uniq);
-    celltype=$(grep "${file}" ${input} | cut -f2 | sort | uniq);
-    positive=$(grep "${file}" ${input} | cut -f4 | sort | uniq);
-    negative=$(grep "${file}" ${input} | cut -f3 | sort | uniq);
-    gtf=$(grep "${file}" ${input} | cut -f6 | sort | uniq);
-    stem=$(echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2);
-
+date ## Identify pos/neg/target hits passing significance threshold at
+while IFS=$'\t' read -r file celltype negative positive target run info stat threshold; do
+    stem=$(echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2)
+    set_stat_vars "${stat}" "${threshold}"
+    base=${out_path_step042_summary}/${run}_${celltype}_${stem}
     while read stats; do
         mainstats=$(echo "${stats}" | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev)
-        
-        # positives
-        while read pos; do
-            grep -w "${pos}" ${stats} >> ${out_path_step042_summary}/${mainstats}.posctrl.txt
+        grep -wFf ${positive} ${stats} > ${out_path_step042_summary}/${mainstats}.posctrl.txt || true
+        grep -wFf ${negative} ${stats} > ${out_path_step042_summary}/${mainstats}.negctrl.txt || true
+        grep -wFf ${target}   ${stats} > ${out_path_step042_summary}/${mainstats}.targets.txt || true
 
-        done < ${positive}
+        ## Subset targets-info to the significant targets, appending their statistic
+        case ${mainstats} in
+            *.pos.gene_summary) c=${poscol};;
+            *.neg.gene_summary) c=${negcol};;
+        esac
+        {
+            echo -e "chr\tstart\tend\tid\tscore\tstrand\ttype\tname\tucsc-location\tnotes\t${label}"
+            awk -F'\t' -v c=${c} 'NR==FNR{v[$1]=$c; next} ($4 in v){print $0"\t"v[$4]}' \
+                ${out_path_step042_summary}/${mainstats}.targets.txt ${info}
+        } > ${out_path_step042_summary}/${mainstats}.targets.info.tsv
+    done < <(ls ${base}.*.gene_summary.txt)
+done < <(list_runs)
 
-        # negatives
-        while read neg; do
-            grep -w "${neg}" ${stats} >> ${out_path_step042_summary}/${mainstats}.negctrl.txt
-        done < ${negative}
+date ## Write summary counts of significant hits to TSV at
+list_runs | while IFS=$'\t' read -r file celltype negative positive target run info stat threshold; do
+    stem=$(echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2)
+    set_stat_vars "${stat}" "${threshold}"
+    base=${out_path_step042_summary}/${run}_${celltype}_${stem}
+    summary=${out_path_step042_summary}/summary_hits-stats-${run}.tsv
 
-        # targets
-        while read tar; do
-            grep -w "${tar}" ${stats} >> ${out_path_step042_summary}/${mainstats}.targets.txt
-        done < ${target}
+    ## write header once per run
+    [ -s "${summary}" ] || echo -e "cell-type\tnormalisation\tstatistic\tthreshold\tgene-counts\tall-hits\tpos-hits\tneg-hits" > ${summary}
 
-    done < <(ls ${out_path_step042_summary}/${celltype}_${stem}*.gene_summary.txt)
-done < <(cut -f1 ${input} | sort | uniq)
-
-date ## Write summary counts passing MAGeCK test FDR# to TSV at
-cut -f1 ${input} | sort | uniq | while read file; do target=`grep "${file}" ${input} | cut -f5 | sort | uniq`; celltype=`grep "${file}" ${input} | cut -f2 | sort | uniq`; positive=`grep "${file}" ${input} | cut -f4 | sort | uniq`; negative=`grep "${file}" ${input} | cut -f3 | sort | uniq`; gtf=`grep "${file}" ${input} | cut -f6 | sort | uniq`; library=`grep "${file}" ${input} | cut -f7 | sort | uniq`; stem=`echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2`;
-
-# all counts - total (positive and negative hits)
-grossFDR0p1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.*gene_summary.txt`;
-grossFDR0p2=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.*gene_summary.txt`;
-grossFDR0p3=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.*gene_summary.txt`;
-grossFDR0p4=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.*gene_summary.txt`;
-grossFDR0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.*gene_summary.txt`;
-grossFDRb0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.*gene_summary.txt`;
-grossFDR1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.*gene_summary.txt`;
-grossFDR0=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.*gene_summary.txt`;
-
-# all counts - positive hits
-grossFDR0p1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.pos.gene_summary.txt`;
-grossFDR0p2pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.pos.gene_summary.txt`;
-grossFDR0p3pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.pos.gene_summary.txt`;
-grossFDR0p4pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.pos.gene_summary.txt`;
-grossFDR0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.pos.gene_summary.txt`;
-grossFDRb0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.pos.gene_summary.txt`;
-grossFDR1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.pos.gene_summary.txt`;
-grossFDR0pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.pos.gene_summary.txt`;
-
-# all counts - negative hits
-grossFDR0p1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.neg.gene_summary.txt`;
-grossFDR0p2neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.neg.gene_summary.txt`;
-grossFDR0p3neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.neg.gene_summary.txt`;
-grossFDR0p4neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.neg.gene_summary.txt`;
-grossFDR0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.neg.gene_summary.txt`;
-grossFDRb0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.neg.gene_summary.txt`;
-grossFDR1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.neg.gene_summary.txt`;
-grossFDR0neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.neg.gene_summary.txt`;
-
-# positive controls counts - total (positive and negative hits)
-posFDR0p1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.*gene_summary.posctrl.txt`;
-posFDR0p2=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.*gene_summary.posctrl.txt`;
-posFDR0p3=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.*gene_summary.posctrl.txt`;
-posFDR0p4=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.*gene_summary.posctrl.txt`;
-posFDR0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.*gene_summary.posctrl.txt`;
-posFDRb0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.*gene_summary.posctrl.txt`;
-posFDR1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.*gene_summary.posctrl.txt`;
-posFDR0=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.*gene_summary.posctrl.txt`;
-
-# positive controls counts - positive hits
-posFDR0p1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.pos.gene_summary.posctrl.txt`;
-posFDR0p2pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.pos.gene_summary.posctrl.txt`;
-posFDR0p3pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.pos.gene_summary.posctrl.txt`;
-posFDR0p4pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.pos.gene_summary.posctrl.txt`;
-posFDR0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.pos.gene_summary.posctrl.txt`;
-posFDRb0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.pos.gene_summary.posctrl.txt`;
-posFDR1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.pos.gene_summary.posctrl.txt`;
-posFDR0pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.pos.gene_summary.posctrl.txt`;
-
-# positive controls counts - negative hits
-posFDR0p1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.neg.gene_summary.posctrl.txt`;
-posFDR0p2neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.neg.gene_summary.posctrl.txt`;
-posFDR0p3neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.neg.gene_summary.posctrl.txt`;
-posFDR0p4neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.neg.gene_summary.posctrl.txt`;
-posFDR0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.neg.gene_summary.posctrl.txt`;
-posFDRb0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.neg.gene_summary.posctrl.txt`;
-posFDR1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.neg.gene_summary.posctrl.txt`;
-posFDR0neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.neg.gene_summary.posctrl.txt`;
-
-# negative controls counts - total (positive and negative hits)
-negFDR0p1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.*gene_summary.negctrl.txt`;
-negFDR0p2=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.*gene_summary.negctrl.txt`;
-negFDR0p3=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.*gene_summary.negctrl.txt`;
-negFDR0p4=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.*gene_summary.negctrl.txt`;
-negFDR0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.*gene_summary.negctrl.txt`;
-negFDRb0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.*gene_summary.negctrl.txt`;
-negFDR1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.*gene_summary.negctrl.txt`;
-negFDR0=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.*gene_summary.negctrl.txt`;
-
-# negative controls counts - positive hits
-negFDR0p1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.pos.gene_summary.negctrl.txt`;
-negFDR0p2pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.pos.gene_summary.negctrl.txt`;
-negFDR0p3pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.pos.gene_summary.negctrl.txt`;
-negFDR0p4pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.pos.gene_summary.negctrl.txt`;
-negFDR0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.pos.gene_summary.negctrl.txt`;
-negFDRb0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.pos.gene_summary.negctrl.txt`;
-negFDR1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.pos.gene_summary.negctrl.txt`;
-negFDR0pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.pos.gene_summary.negctrl.txt`;
-
-# negative counts - negative hits
-negFDR0p1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.neg.gene_summary.negctrl.txt`;
-negFDR0p2neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.neg.gene_summary.negctrl.txt`;
-negFDR0p3neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.neg.gene_summary.negctrl.txt`;
-negFDR0p4neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.neg.gene_summary.negctrl.txt`;
-negFDR0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.neg.gene_summary.negctrl.txt`;
-negFDRb0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.neg.gene_summary.negctrl.txt`;
-negFDR1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.neg.gene_summary.negctrl.txt`;
-negFDR0neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.neg.gene_summary.negctrl.txt`;
-
-# target counts - total (positive and negative hits)
-tarFDR0p1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.*gene_summary.targets.txt`;
-tarFDR0p2=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.*gene_summary.targets.txt`;
-tarFDR0p3=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.*gene_summary.targets.txt`;
-tarFDR0p4=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.*gene_summary.targets.txt`;
-tarFDR0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.*gene_summary.targets.txt`;
-tarFDRb0p5=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.*gene_summary.targets.txt`;
-tarFDR1=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.*gene_summary.targets.txt`;
-tarFDR0=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.*gene_summary.targets.txt`;
-
-# target counts - positive hits
-tarFDR0p1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.pos.gene_summary.targets.txt`;
-tarFDR0p2pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.pos.gene_summary.targets.txt`;
-tarFDR0p3pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.pos.gene_summary.targets.txt`;
-tarFDR0p4pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.pos.gene_summary.targets.txt`;
-tarFDR0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.pos.gene_summary.targets.txt`;
-tarFDRb0p5pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.pos.gene_summary.targets.txt`;
-tarFDR1pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.pos.gene_summary.targets.txt`;
-tarFDR0pos=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.pos.gene_summary.targets.txt`;
-
-# target counts - negative hits
-tarFDR0p1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p1.neg.gene_summary.targets.txt`;
-tarFDR0p2neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p2.neg.gene_summary.targets.txt`;
-tarFDR0p3neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p3.neg.gene_summary.targets.txt`;
-tarFDR0p4neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p4.neg.gene_summary.targets.txt`;
-tarFDR0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0p5.neg.gene_summary.targets.txt`;
-tarFDRb0p5neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDRb0p5.neg.gene_summary.targets.txt`;
-tarFDR1neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR1.neg.gene_summary.targets.txt`;
-tarFDR0neg=`awk 'END{print NR}' ${out_path_step042_summary}/${celltype}_${stem}_FDR0.neg.gene_summary.targets.txt`;
-
-# write to TSV file
-echo -e "${celltype}\t${stem}\tall-genes\t${grossFDR0p1}\t${grossFDR0p1pos}\t${grossFDR0p1neg}\t${grossFDR0p2}\t${grossFDR0p2pos}\t${grossFDR0p2neg}\t${grossFDR0p3}\t${grossFDR0p3pos}\t${grossFDR0p3neg}\t${grossFDR0p4}\t${grossFDR0p4pos}\t${grossFDR0p4neg}\t${grossFDR0p5}\t${grossFDR0p5pos}\t${grossFDR0p5neg}\t${grossFDRb0p5}\t${grossFDRb0p5pos}\t${grossFDRb0p5neg}\t${grossFDR1}\t${grossFDR1pos}\t${grossFDR1neg}\t${grossFDR0}\t${grossFDR0pos}\t${grossFDR0neg}" >> ${out_path_step042_summary}/summary_FDR-stats-${library}.tsv
-echo -e "${celltype}\t${stem}\tpos-ctrls\t${posFDR0p1}\t${posFDR0p1pos}\t${posFDR0p1neg}\t${posFDR0p2}\t${posFDR0p2pos}\t${posFDR0p2neg}\t${posFDR0p3}\t${posFDR0p3pos}\t${posFDR0p3neg}\t${posFDR0p4}\t${posFDR0p4pos}\t${posFDR0p4neg}\t${posFDR0p5}\t${posFDR0p5pos}\t${posFDR0p5neg}\t${posFDRb0p5}\t${posFDRb0p5pos}\t${posFDRb0p5neg}\t${posFDR1}\t${posFDR1pos}\t${posFDR1neg}\t${posFDR0}\t${posFDR0pos}\t${posFDR0neg}" >> ${out_path_step042_summary}/summary_FDR-stats-${library}.tsv
-echo -e "${celltype}\t${stem}\tneg-ctrls\t${negFDR0p1}\t${negFDR0p1pos}\t${negFDR0p1neg}\t${negFDR0p2}\t${negFDR0p2pos}\t${negFDR0p2neg}\t${negFDR0p3}\t${negFDR0p3pos}\t${negFDR0p3neg}\t${negFDR0p4}\t${negFDR0p4pos}\t${negFDR0p4neg}\t${negFDR0p5}\t${negFDR0p5pos}\t${negFDR0p5neg}\t${negFDRb0p5}\t${negFDRb0p5pos}\t${negFDRb0p5neg}\t${negFDR1}\t${negFDR1pos}\t${negFDR1neg}\t${negFDR0}\t${negFDR0pos}\t${negFDR0neg}" >> ${out_path_step042_summary}/summary_FDR-stats-${library}.tsv
-echo -e "${celltype}\t${stem}\ttargets\t${tarFDR0p1}\t${tarFDR0p1pos}\t${tarFDR0p1neg}\t${tarFDR0p2}\t${tarFDR0p2pos}\t${tarFDR0p2neg}\t${tarFDR0p3}\t${tarFDR0p3pos}\t${tarFDR0p3neg}\t${tarFDR0p4}\t${tarFDR0p4pos}\t${tarFDR0p4neg}\t${tarFDR0p5}\t${tarFDR0p5pos}\t${tarFDR0p5neg}\t${tarFDRb0p5}\t${tarFDRb0p5pos}\t${tarFDRb0p5neg}\t${tarFDR1}\t${tarFDR1pos}\t${tarFDR1neg}\t${tarFDR0}\t${tarFDR0pos}\t${tarFDR0neg}" >> ${out_path_step042_summary}/summary_FDR-stats-${library}.tsv ; done
-
-# add header to TSV file
-ls ${out_path_step042_summary}/summary_FDR-stats*.tsv | while read file; do sed -i '1 i\cell-type\tnormalisation\tgene-counts\tall-hits-FDR0.1\tpos-hits-FDR0.1\tneg-hits-FDR0.1\tall-hits-FDR0.2\tpos-hits-FDR0.2\tneg-hits-FDR0.2\tall-hits-FDR0.3\tpos-hits-FDR0.3\tneg-hits-FDR0.3\tall-hits-FDR0.4\tpos-hits-FDR0.4\tneg-hits-FDR0.4\tall-hits-FDR0.5\tpos-hits-FDR0.5\tneg-hits-FDR0.5\tall-hits-1<FDR<0.5\tpos-hits-1<FDR<0.5\tneg-hits-1<FDR<0.5\tall-hits-FDR1\tpos-hits-FDR1\tneg-hits-FDR1\tall-hits-FDR0\tpos-hits-FDR0\tneg-hits-FDR0' ${file} ; done
-
-date ## Create TSV info file and GTF for ucsc session at
-while read tar; do
-    gtf=$(grep "${lib}" ${input} | cut -f6 | sort | uniq);
-    library=$(grep "${lib}" ${input} | cut -f8 | sort | uniq);
-    folder=$(grep "${lib}" ${input} | cut -f1 | rev | cut -d'/' -f2- | sort | uniq);
-    ucsc=$(grep "${lib}" ${input} | cut -f9 | sort | uniq);
-
-    grep -w "${tar}" ${folder}/*.sgrna_summary.txt | cut -d':' -f2- | cut -f1 | sort | uniq | while read sgrna; do guides=`grep "${sgrna}" ${library} | cut -f2 | sort | uniq | tr '\n' ',' | sed 's/,$//'`; posh=`if grep -wq "${tar}" ${out_path_step042_summary}/*.pos.targets.txt; then echo yes; else echo none; fi`; pfdr=`grep -w "${tar}" ${out_path_step042_summary}/*.pos.targets.txt | cut -f11 | tr '\n' ',' | sed 's/,$//'`; negh=`if grep -wq "${tar}" ${out_path_step042_summary}/${celltype}_${stem}.neg.targets.txt; then echo yes; else echo none; fi`; nfdr=`grep -w "${tar}" ${out_path_step042_summary}/${celltype}_${stem}.neg.targets.txt | cut -f5 | tr '\n' ',' | sed 's/,$//'`; norm=`grep -w "${tar}" ${folder}/*.sgrna_summary.txt | cut -d':' -f1 | rev | cut -d'/' -f1 | cut -d'.' -f5- | cut -d'_' -f1 | cut -d'-' -f3 | rev | sort | uniq | tr '\n' ',' | sed 's/,$//'`; samples=`grep -w "${tar}" ${folder}/*.sgrna_summary.txt | cut -d':' -f1 | rev | cut -d'/' -f1 | cut -d'.' -f5- | cut -d'_' -f2- | rev | sort | uniq | tr '\n' ',' | sed 's/,$//'`; cutoffs=`grep -w "${tar}" ${folder}/*.sgrna_summary.txt | cut -d':' -f1 | rev | cut -d'/' -f1 | cut -d'.' -f4 | cut -d'_' -f1 | rev | sort | uniq | tr '\n' ',' | sed 's/,$//'`; ucscinfo=`grep -w "${tar}" ${ucsc}`; echo -e "\t${t}\t${guides}\t${posh}\t${pfdr}\t${negh}\t${nfdr}\t${norm}\t${samples}\t${cutoffs}\t${ucscinfo}" ; done >> ${out_path_step042_summary}/${library}.targets.tsv
-
-    grep "${tar}" ${gtf} | cut -d':' -f2- >> ${out_path_step042_summary}/${library}.targets.gtf
-
-done < <(cut -f1 ${out_path_step042_summary}/*targets.txt | sort | uniq)
-
+    for grp in all-genes:: pos-ctrls:.posctrl: neg-ctrls:.negctrl: targets:.targets:; do
+        name=$(echo ${grp} | cut -d':' -f1)
+        suf=$(echo ${grp} | cut -d':' -f2)
+        hdr=$([ -z "${suf}" ] && echo 1 || echo 0)   # only gene_summary files have a header
+        pos=$(count_hits ${base}.pos.gene_summary${suf}.txt ${hdr})
+        neg=$(count_hits ${base}.neg.gene_summary${suf}.txt ${hdr})
+        echo -e "${celltype}\t${stem}\t${label}\t${threshold}\t${name}\t$((pos+neg))\t${pos}\t${neg}" >> ${summary}
+    done
+done
 
 # This will remove $VARNAMES from output file with the actual $VARVALUE
 # allowing for easily retracing commands
 sed -i 's,${input},'"${input}"',g' "$logfile"
-sed -i 's,${pbs_stem},'"${pbs_stem}"',g' "$logfile"
-sed -i 's,${email},'"${email}"',g' "$logfile"
-sed -i 's,${mem},'"${mem}"',g' "$logfile"
-sed -i 's,${ncpus},'"${ncpus}"',g' "$logfile"
-sed -i 's,${walltime},'"${walltime}"',g' "$logfile"
 sed -i 's,${human_thislogdate},'"${human_thislogdate}"',g' "$logfile"
 sed -i 's,${thislogdate},'"${thislogdate}"',g' "$logfile"
 sed -i 's,${user},'"${user}"',g' "$logfile"
-sed -i 's,${module_mageck},'"${module_mageck}"',g' "$logfile"
 sed -i 's,${out_path_step042_summary},'"${out_path_step042_summary}"',g' "$logfile"
 sed -i 's,${logfile},'"${logfile}"',g' "$logfile"
 sed -n -e :a -e '1,3!{P;N;D;};N;ba' $logfile > tmp ; mv tmp $logfile
