@@ -4,7 +4,7 @@ usage(){
 echo "
 Written by Isabela Almeida
 Created on September 26, 2025
-Last modified on Nov 18, 2026
+Last modified on Nov 20, 2026
 Version: ${version}
 
 Description: Run Step 042 of the CAMeLS pipeline (CRISPR Analysis Method for Library Screens). 
@@ -14,7 +14,7 @@ Usage: bash ipda_camels_step042-to-pbs.sh -i 'path/to/input/files'
 ## Input:
 
 -i <path/to/input/files>    Input TSV files including path FROM working
-                            directory. This TSV file should contain:
+                            directory. This TSV file should contain no header line and:
                             
                             Col1:
                             /path/from/working/dir/to/camels041_stats-combined_MAGeCK_DATE/stem*.gene_summary.txt
@@ -38,10 +38,11 @@ Usage: bash ipda_camels_step042-to-pbs.sh -i 'path/to/input/files'
                             riskoc-FDR0p1 for library riskoc filtered at FDR 0.1 (col8 fdr, col9 0.1)
                             riskoc-pval0p05 for library riskoc filtered at p-value 0.05 (col8 pval, col9 0.05)
 
-                            Col7:
-                            /path/from/working/dir/to/targets-info.tsv
-                            containing
-                            chr \t start \t end \t id \t score \t strand \t type \t name \t ucsc-location \t notes
+                            Col7 (optional, may be left empty):
+                            /path/from/working/dir/to/targets.gtf
+                            Plain-text GTF used to annotate significant hits. Hit IDs are matched to the gene_id,
+                            gene_name or transcript_id attribute. If the GTF is not provided, the annotation columns
+                            will be filled with NA.
 
                             Col8:
                             <fdr|pval>
@@ -64,10 +65,14 @@ Usage: bash ipda_camels_step042-to-pbs.sh -i 'path/to/input/files'
 ## Output:
 
 logfile.txt                                       Logfile with commands executed and date
-<run>_<celltype>_<stem>.pos|neg.gene_summary.txt  Genes passing the threshold (pos/neg)
+<run>_<celltype>_<stem>.pos|neg.gene_summary.txt  Genes passing the threshold (pos/neg): MAGeCK columns
+                                                  plus chr, start, end, strand, type, name,
+                                                  ucsc-location (NA if no GTF) and category
 <...>.gene_summary.posctrl|negctrl|targets.txt    Controls/targets among those genes
-<...>.gene_summary.targets.info.tsv               Col7 info rows for significant targets,
-                                                  with their FDR or p-value appended
+sig-hits-info.tsv                                 One row per significant gene across ALL rows of the
+                                                  input TSV; score = number of selections,
+                                                  selection-pos/-neg = every run/threshold that selected
+                                                  it in each direction
 summary_hits-stats-<run>.tsv                      Hit counts per cell type/normalisation
 
 Pipeline description:
@@ -75,7 +80,7 @@ Pipeline description:
 #   010 Quality check sequencing (1FastQC, 2MultiQC)
 #   020 Guide representation (1BBDuk - finds 23nt perfect matchs and 21nt 0,2 and 3MM, 2BASH - write to TSV, 3R plot results)
 #   030 Count reads from FASTQ files (1MAGeCK - replicate level; 2MAGeCK - combined replicates; 3Bash - summary replicates; 4Bash - summary combined)
-#-->040 Statistical test (1MAGeCK; 2Bash summary)
+#-->040 Statistical test (1MAGeCK; 2Bash summary; 3R plot results)
 #   050 Plot results (1MAGeCK)
 
 Please contact Isabela Almeida at mb.isabela42@gmail.com if you encounter any problems.
@@ -121,10 +126,15 @@ do
 done
 
 #................................................
-#  Validate statistic/threshold columns (8, 9)
+#  Validate input file and columns
 #................................................
 
+if [ -z "${input}" ] || [ ! -f "${input}" ]; then
+    echo "ERROR: input TSV (-i) not given or not found: ${input}" >&2; exit 1
+fi
+
 awk -F'\t' '
+function missing(f,   line, r) { r = (getline line < f); close(f); return (r < 0) }
 {
     s = tolower($8); t = $9
     if ($6 !~ /^[A-Za-z0-9._-]+$/) { print "ERROR line " NR ": col6 must contain only letters, digits, . _ - (got \"" $6 "\")" > "/dev/stderr"; bad = 1 }
@@ -132,6 +142,9 @@ awk -F'\t' '
     if (!(t+0 == t && t > 0 && t <= 1)) { print "ERROR line " NR ": col9 must be a number in (0,1] (got \"" t "\")" > "/dev/stderr"; bad = 1 }
     if (($6 in S) && (S[$6] != s || T[$6] != t)) { print "ERROR line " NR ": conflicting col8/col9 for run " $6 > "/dev/stderr"; bad = 1 }
     S[$6] = s; T[$6] = t
+    for (i = 1; i <= 6; i++) if ($i == "") { print "ERROR line " NR ": col" i " is empty" > "/dev/stderr"; bad = 1 }
+    split("1 3 4 5 7", fc, " ")
+    for (j in fc) { i = fc[j]; if ($i != "" && missing($i)) { print "ERROR line " NR ": col" i " file not found: " $i > "/dev/stderr"; bad = 1 } }
 }
 END { exit bad }' ${input} || exit 1
 
@@ -139,9 +152,8 @@ END { exit bad }' ${input} || exit 1
 #  Helpers
 #................................................
 
-## Unique input rows (cols 1-9, statistic lowercased)
-## Each line it prints is one row to process
-list_runs(){ awk -F'\t' -v OFS='\t' '{print $1,$2,$3,$4,$5,$6,$7,tolower($8),$9}' ${input} | sort -u; }
+## Fields joined with \037 (not tab) so empty columns are kept by read
+list_runs(){ awk -F'\t' -v OFS='\037' '{print $1,$2,$3,$4,$5,$6,$7,tolower($8),$9}' ${input} | sort -u; }
 
 ## Usage: set_stat_vars "fdr|pval" "threshold"
 ## Sets: stat, threshold, poscol, negcol, label
@@ -153,6 +165,30 @@ set_stat_vars(){
         *)    echo "ERROR: unknown statistic '${stat}'" >&2; exit 1;;
     esac
 }
+
+## Usage: gtf_lookup "path/to/targets.gtf"
+## Prints one line per gene_id / gene_name / transcript_id:
+## id chr start end strand type name ucsc-location
+## (start/end span all GTF lines of that id; coordinates 1-based as in the GTF)
+gtf_lookup(){ awk -F'\t' -v OFS='\t' '
+    $0 ~ /^#/ || NF < 9 { next }
+    {
+        delete A; n = split($9, kv, ";")
+        for (i = 1; i <= n; i++) {
+            p = kv[i]; gsub(/^ +| +$/, "", p); if (p == "") continue
+            k = p; sub(/ .*/, "", k); v = p; sub(/^[^ ]+ +/, "", v); gsub(/"/, "", v); A[k] = v
+        }
+        typ = ("gene_type" in A) ? A["gene_type"] : (("gene_biotype" in A) ? A["gene_biotype"] : $3)
+        nm  = ("gene_name" in A) ? A["gene_name"] : A["gene_id"]
+        split("gene_id gene_name transcript_id", keys, " ")
+        for (j = 1; j <= 3; j++) {
+            if (!(keys[j] in A)) continue
+            id = A[keys[j]]
+            if (!(id in CHR)) { CHR[id] = $1; S[id] = $4+0; E[id] = $5+0; STR[id] = $7; TYP[id] = typ; NM[id] = nm; order[++m] = id }
+            else { if ($4+0 < S[id]) S[id] = $4+0; if ($5+0 > E[id]) E[id] = $5+0 }
+        }
+    }
+    END { for (x = 1; x <= m; x++) { id = order[x]; print id, CHR[id], S[id], E[id], STR[id], TYP[id], NM[id], CHR[id] ":" S[id] "-" E[id] } }' "$1"; }
 
 ## Count data lines in a file (skip header if $2=1); 0 if file missing/empty
 count_hits(){ if [ -s "$1" ]; then awk -v h="$2" 'FNR>h{n++} END{print n+0}' "$1"; else echo 0; fi; }
@@ -178,6 +214,10 @@ out_path_step042_summary="camels042_sig-hits_summary_${thislogdate}"
 
 ## Create output directories
 mkdir -p ${out_path_step042_summary}
+
+## Long table of every significant gene in every run (filled in by the filtering loop)
+allhits=${out_path_step042_summary}/sig-hits_all-runs.tmp
+echo -e "id\tcategory\trun\tcell-type\tnormalisation\tdirection\tstatistic\tvalue\tthreshold\tchr\tstart\tend\tstrand\ttype\tname\tucsc-location" > ${allhits}
 
 #................................................
 #  Print Execution info to user
@@ -225,50 +265,84 @@ set -v
 #  Filter results passing threshold
 #................................................
 
+date ## Build one id-to-coordinates lookup per GTF (col7) at
+while read gtf; do
+    gtf_lookup ${gtf} > ${out_path_step042_summary}/gtf-lookup_$(echo "${gtf}" | cksum | cut -d' ' -f1).tsv
+done < <(list_runs | awk -F'\037' '$7 != "" && !seen[$7]++ {print $7}')
+
 date ## Filter genes passing user-defined significance threshold at
-list_runs | while IFS=$'\t' read -r file celltype negative positive target run info stat threshold; do
+list_runs | while IFS=$'\037' read -r file celltype negative positive target run info stat threshold; do
     stem=$(echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2)
     set_stat_vars "${stat}" "${threshold}"
     base=${out_path_step042_summary}/${run}_${celltype}_${stem}
     echo "## ${run} ${celltype}_${stem}: stat=${stat} threshold=${threshold} pos-col=${poscol} neg-col=${negcol}"
-    awk -F'\t' -v c=${poscol} -v t=${threshold} 'NR==1 || $c < t' ${file} > ${base}.pos.gene_summary.txt
-    awk -F'\t' -v c=${negcol} -v t=${threshold} 'NR==1 || $c < t' ${file} > ${base}.neg.gene_summary.txt
+
+    # Lookup for this row's GTF (none if col7 is empty)
+    if [ -n "${info}" ]; then lookup=${out_path_step042_summary}/gtf-lookup_$(echo "${info}" | cksum | cut -d' ' -f1).tsv; else lookup=/dev/null; fi
+    
+    # Filter, annotate and record significant genes in each direction
+    for dir in pos neg; do
+        [ ${dir} = pos ] && c=${poscol} || c=${negcol}
+        awk -F'\t' -v OFS='\t' -v c=${c} -v t=${threshold} -v dir=${dir} -v run=${run} -v ct=${celltype} -v norm=${stem} -v lab=${label} -v long=${allhits} '
+            FILENAME==ARGV[1] {P[$1]; next}
+            FILENAME==ARGV[2] {N[$1]; next}
+            FILENAME==ARGV[3] {T[$1]; next}
+            FILENAME==ARGV[4] {L[$1] = $2 OFS $3 OFS $4 OFS $5 OFS $6 OFS $7 OFS $8; next}
+            FNR==1 {print $0, "chr", "start", "end", "strand", "type", "name", "ucsc-location", "category"; next}
+            $c < t {
+                cat = ($1 in P) ? "pos-ctrl" : ($1 in N) ? "neg-ctrl" : ($1 in T) ? "target" : "other"
+                ann = ($1 in L) ? L[$1] : "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA"
+                print $0, ann, cat
+                print $1, cat, run, ct, norm, dir, lab, $c, t, ann >> long
+            }' ${positive} ${negative} ${target} ${lookup} ${file} > ${base}.${dir}.gene_summary.txt
+    done
 done
 
 date ## Identify pos/neg/target hits passing significance threshold at
-while IFS=$'\t' read -r file celltype negative positive target run info stat threshold; do
+while IFS=$'\037' read -r file celltype negative positive target run info stat threshold; do
     stem=$(echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2)
     set_stat_vars "${stat}" "${threshold}"
     base=${out_path_step042_summary}/${run}_${celltype}_${stem}
     while read stats; do
         mainstats=$(echo "${stats}" | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev)
-        grep -wFf ${positive} ${stats} > ${out_path_step042_summary}/${mainstats}.posctrl.txt || true
-        grep -wFf ${negative} ${stats} > ${out_path_step042_summary}/${mainstats}.negctrl.txt || true
-        grep -wFf ${target}   ${stats} > ${out_path_step042_summary}/${mainstats}.targets.txt || true
-
-        ## Subset targets-info to the significant targets, appending their statistic
-        case ${mainstats} in
-            *.pos.gene_summary) c=${poscol};;
-            *.neg.gene_summary) c=${negcol};;
-        esac
-        {
-            echo -e "chr\tstart\tend\tid\tscore\tstrand\ttype\tname\tucsc-location\tnotes\t${label}"
-            awk -F'\t' -v c=${c} 'NR==FNR{v[$1]=$c; next} ($4 in v){print $0"\t"v[$4]}' \
-                ${out_path_step042_summary}/${mainstats}.targets.txt ${info}
-        } > ${out_path_step042_summary}/${mainstats}.targets.info.tsv
+        awk -F'\t' 'NR==FNR{L[$1]; next} FNR>1 && ($1 in L)' ${positive} ${stats} > ${out_path_step042_summary}/${mainstats}.posctrl.txt
+        awk -F'\t' 'NR==FNR{L[$1]; next} FNR>1 && ($1 in L)' ${negative} ${stats} > ${out_path_step042_summary}/${mainstats}.negctrl.txt
+        awk -F'\t' 'NR==FNR{L[$1]; next} FNR>1 && ($1 in L)' ${target}   ${stats} > ${out_path_step042_summary}/${mainstats}.targets.txt
     done < <(ls ${base}.*.gene_summary.txt)
 done < <(list_runs)
 
+date ## Combine significant hits from all runs into one file at
+{
+    echo -e "chr\tstart\tend\tid\tscore\tstrand\ttype\tname\tucsc-location\tcategory\tselection-pos\tselection-neg"
+    awk -F'\t' -v OFS='\t' '
+        NR > 1 {
+            id = $1
+            if (!(id in CAT)) { CAT[id] = $2; order[++m] = id }
+            else if (index(";" CAT[id] ";", ";" $2 ";") == 0) CAT[id] = CAT[id] ";" $2
+            if (!(id in ANN) && $10 != "NA") ANN[id] = $10 OFS $11 OFS $12 OFS $13 OFS $14 OFS $15 OFS $16
+            sel = $3 "/" $4 "/" $5 " " $7 "=" $8 "<" $9
+            if ($6 == "pos") SELP[id] = SELP[id] (SELP[id] == "" ? "" : "; ") sel
+            else             SELN[id] = SELN[id] (SELN[id] == "" ? "" : "; ") sel
+            CNT[id]++
+        }
+        END {
+            for (x = 1; x <= m; x++) {
+                id = order[x]
+                sp = (SELP[id] == "") ? "NA" : SELP[id]
+                sn = (SELN[id] == "") ? "NA" : SELN[id]
+                if (id in ANN) { split(ANN[id], f, "\t"); print f[1], f[2], f[3], id, CNT[id], f[4], f[5], f[6], f[7], CAT[id], sp, sn }
+                else           print "NA", "NA", "NA", id, CNT[id], "NA", "NA", "NA", "NA", CAT[id], sp, sn
+            }
+        }' ${allhits} | sort -t$'\t' -k1,1V -k2,2n | awk '/^NA\t/{na = na $0 "\n"; next} {print} END{printf "%s", na}'
+} > ${out_path_step042_summary}/sig-hits-info.tsv
+
 date ## Write summary counts of significant hits to TSV at
-list_runs | while IFS=$'\t' read -r file celltype negative positive target run info stat threshold; do
+list_runs | while IFS=$'\037' read -r file celltype negative positive target run info stat threshold; do
     stem=$(echo ${file} | rev | cut -d'/' -f1 | cut -d'.' -f3- | rev | cut -d'_' -f2)
     set_stat_vars "${stat}" "${threshold}"
     base=${out_path_step042_summary}/${run}_${celltype}_${stem}
     summary=${out_path_step042_summary}/summary_hits-stats-${run}.tsv
-
-    ## write header once per run
     [ -s "${summary}" ] || echo -e "cell-type\tnormalisation\tstatistic\tthreshold\tgene-counts\tall-hits\tpos-hits\tneg-hits" > ${summary}
-
     for grp in all-genes:: pos-ctrls:.posctrl: neg-ctrls:.negctrl: targets:.targets:; do
         name=$(echo ${grp} | cut -d':' -f1)
         suf=$(echo ${grp} | cut -d':' -f2)
@@ -279,6 +353,9 @@ list_runs | while IFS=$'\t' read -r file celltype negative positive target run i
     done
 done
 
+date ## Remove intermediate files at
+rm -f ${out_path_step042_summary}/gtf-lookup_*.tsv ${allhits}
+
 # This will remove $VARNAMES from output file with the actual $VARVALUE
 # allowing for easily retracing commands
 sed -i 's,${input},'"${input}"',g' "$logfile"
@@ -287,5 +364,5 @@ sed -i 's,${thislogdate},'"${thislogdate}"',g' "$logfile"
 sed -i 's,${user},'"${user}"',g' "$logfile"
 sed -i 's,${out_path_step042_summary},'"${out_path_step042_summary}"',g' "$logfile"
 sed -i 's,${logfile},'"${logfile}"',g' "$logfile"
-sed -n -e :a -e '1,3!{P;N;D;};N;ba' $logfile > tmp ; mv tmp $logfile
+sed -n -e :a -e '1,3!{P;N;D;};N;ba' $logfile > ${logfile}.tmp ; mv ${logfile}.tmp $logfile
 set +v
