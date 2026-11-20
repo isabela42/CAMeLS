@@ -39,7 +39,7 @@ Usage: bash ipda_camels_step042-to-pbs.sh -i 'path/to/input/files'
                             riskoc-pval0p05 for library riskoc filtered at p-value 0.05 (col8 pval, col9 0.05)
 
                             Col7 (optional, may be left empty):
-                            /path/from/working/dir/to/targets.gtf
+                            /path/from/working/dir/to/transcriptome.gtf
                             Plain-text GTF used to annotate significant hits. Hit IDs are matched to the gene_id,
                             gene_name or transcript_id attribute. If the GTF is not provided, the annotation columns
                             will be filled with NA.
