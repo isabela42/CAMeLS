@@ -5,13 +5,15 @@ input_combined <- args[which(args == "--inputcomb") + 1]
 input_replicate <- args[which(args == "--inputrep") + 1]
 outdir <- args[which(args == "--outdir") + 1]
 outstem <- args[which(args == "--outstem") + 1]
+stat <- if ("--stat" %in% args) tolower(args[which(args == "--stat") + 1]) else "fdr"
+threshold <- if ("--threshold" %in% args) as.numeric(args[which(args == "--threshold") + 1]) else 0.3
 functions <- args[which(args == "--function") + 1]
 
 print_help <- function() {
   cat("
 Written by Isabela Almeida
 Created on May 07, 2026
-Last modified on May 12, 2026
+Last modified on Nov 20, 2026
 Version: 1.0.0
 
 Description: Plot Plasmid representation results from the
@@ -26,6 +28,8 @@ Options:
   --inputrep FILE     Input per_target summary TSV file from camels034_combined-summary_BASH-R_DATE
   --outdir DIR        Output directory
   --outstem STEM      Output file stem (default: 'cellA-replicates')
+  --stat fdr|pval     Statistic used to call significant hits (default: fdr)
+  --threshold FLOAT   Hits kept if statistic < threshold (default: 0.3)
   --function FILE     Path to R functions file ipda_camels_rfunctions.r
   --help              Show this help message
 
@@ -57,11 +61,18 @@ library(tidyr)
 library(patchwork)
 
 ## Set input/output paths
-fdr_cutoff <- 0.3
 out_volcanogene <- file.path(outdir, paste0(outstem, ".volcano-gene_summary.pdf"))
 out_volcanosgrna <- file.path(outdir, paste0(outstem, ".volcano-sgrna_summary.pdf"))
-
 out_volcanocannonic <- file.path(outdir, paste0(outstem, ".volcano-gene_summary.cannonical.pdf"))
+
+# Set thresholds and statistic to use
+if (!stat %in% c("fdr", "pval")) stop("--stat must be fdr or pval")
+if (is.na(threshold) || threshold <= 0 || threshold > 1) stop("--threshold must be a number in (0,1]")
+fdr_cutoff <- threshold   # cutoff for the chosen statistic (FDR or p-value)
+stat_label   <- if (stat == "fdr") "FDR"     else "p-value"
+gene_pos_col <- if (stat == "fdr") "pos.fdr" else "pos.p.value"
+gene_neg_col <- if (stat == "fdr") "neg.fdr" else "neg.p.value"
+sgrna_col    <- if (stat == "fdr") "FDR"     else "p.twosided"
 
 # Significant hit boxplot outputs are defined later
 
@@ -116,16 +127,16 @@ df_replicate_long <- df_replicate %>%
 ## Select neg/pos fdr
 df_gene_plot <- df_gene %>%
   mutate(
-    direction = ifelse(pos.fdr <= neg.fdr, "pos", "neg"),
-    selected_fdr = ifelse(direction == "pos", pos.fdr, neg.fdr),
+    direction = ifelse(.data[[gene_pos_col]] <= .data[[gene_neg_col]], "pos", "neg"),
+    selected_stat = ifelse(direction == "pos", .data[[gene_pos_col]], .data[[gene_neg_col]]),
     selected_lfc = ifelse(direction == "pos", pos.lfc, neg.lfc),
-    minus_log10_fdr = -log10(selected_fdr),
+    minus_log10_stat = -log10(selected_stat),
     hit = case_when(
-      selected_lfc > 0  & selected_fdr < fdr_cutoff ~ "Positive",
-      selected_lfc <= 0 & selected_fdr < fdr_cutoff ~ "Negative",
+      selected_lfc > 0  & selected_stat < fdr_cutoff ~ "Positive",
+      selected_lfc <= 0 & selected_stat < fdr_cutoff ~ "Negative",
       TRUE ~ "Not significant"
     ),
-    significant = selected_fdr < fdr_cutoff)
+    significant = selected_stat < fdr_cutoff)
 
 ctrls <- c("neg-ctrl", "pos-ctrl")
 df_gene_plot$type <- factor(
@@ -139,10 +150,14 @@ df_gene_plot$type <- factor(
 label_df <- df_gene_plot %>%
   filter(hit != "Not significant") %>%
   group_by(type, hit) %>%
-  slice_min(selected_fdr, n = 3, with_ties = FALSE) %>%
+  slice_min(selected_stat, n = 3, with_ties = FALSE) %>%
   ungroup()
 
-write.table(df_gene_plot, file.path(outdir, paste0(outstem, ".gene_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
+## Name the statistic columns after the chosen statistic in the output (selected_fdr / selected_pval, ...)
+df_gene_out <- df_gene_plot %>%
+  rename(!!paste0("selected_", stat) := selected_stat,
+         !!paste0("minus_log10_", stat) := minus_log10_stat)
+write.table(df_gene_out, file.path(outdir, paste0(outstem, ".gene_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
 
 #df_geneneg_plot <- df_gene_plot %>%
 #  mutate(selection = "Negative", lfc = neg.lfc, fdr = neg.fdr)
@@ -178,9 +193,10 @@ df_sgrna_plot <- df_sgrna %>%
     alpha_scale = guide_fraction_consensus
   ) %>%
   mutate(
+    stat_value = .data[[sgrna_col]],
     hit = case_when(
-      FDR < fdr_cutoff & LFC > 0 ~ "Positive",
-      FDR < fdr_cutoff & LFC <= 0 ~ "Negative",
+      stat_value < fdr_cutoff & LFC > 0 ~ "Positive",
+      stat_value < fdr_cutoff & LFC <= 0 ~ "Negative",
       TRUE ~ "Not significant"
     )
   )
@@ -194,7 +210,9 @@ df_sgrna_plot$type <- factor(
   )
 )
 
-write.table(df_sgrna_plot, file.path(outdir, paste0(outstem, ".sgrna_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
+df_sgrna_out <- df_sgrna_plot %>%
+  rename(!!paste0("selected_", stat) := stat_value)
+write.table(df_sgrna_out, file.path(outdir, paste0(outstem, ".sgrna_summary.df.tsv")), sep = "\t", quote = FALSE, row.names = FALSE)
 
 ## Define palette
 #script_palette <- c(
@@ -322,10 +340,10 @@ cat(
 )
 
 ## Volcano plot
-volcano_gene <- volcano_plot_gene(df_gene_plot, fdr_cutoff, label_df, script_palette)
+volcano_gene <- volcano_plot_gene(df_gene_plot, fdr_cutoff, label_df, script_palette, stat_label)
 ggsave(file.path(out_volcanogene),
        plot = volcano_gene, width = 19, height = 4.5 , dpi = 100)
-volcano_sgrna <- volcano_plot_guide(df_sgrna_plot, fdr_cutoff, script_palette)
+volcano_sgrna <- volcano_plot_guide(df_sgrna_plot, fdr_cutoff, script_palette, stat_label)
 ggsave(file.path(out_volcanosgrna),
        plot = volcano_sgrna, width = 19, height = 4.5 , dpi = 100)
 
@@ -354,7 +372,7 @@ sig_hits <- df_gene_plot %>%
     hit != "Not significant",
     !type %in% c("neg-ctrl", "pos-ctrl")
   ) %>%
-  select(gene_name, selected_fdr, hit, type)
+  select(gene_name, selected_stat, hit, type)
 
 output_dir <- paste0(outdir, outstem, "_signf-boxplots")
 dir.create(output_dir, showWarnings = FALSE)
@@ -362,7 +380,7 @@ dir.create(output_dir, showWarnings = FALSE)
 for(i in seq_len(nrow(sig_hits))) {
   
   gene <- sig_hits$gene_name[i]
-  fdr  <- signif(sig_hits$selected_fdr[i], 3)
+  fdr  <- signif(sig_hits$selected_stat[i], 3)
   hit_type <- sig_hits$hit[i]
   
   # Get guides for this gene
@@ -392,7 +410,7 @@ for(i in seq_len(nrow(sig_hits))) {
   plot <- (p_combined | p_replicate) +
   plot_annotation(
     title = paste0(
-      outstem, " | ", gene, " | FDR=", fdr, " | ", hit_type,
+            outstem, " | ", gene, " | ", stat_label, "=", fdr, " | ", hit_type,
       "\n", second_line
     )
   ) &
@@ -431,6 +449,6 @@ df_gene_plot$cancer_role <- dplyr::case_when(
 
 label_df_cannonical <- df_gene_plot %>%
   dplyr::filter(cancer_role != "none")
-volcano_cannonic <- volcano_plot_gene(df_gene_plot, fdr_cutoff, label_df_cannonical, script_palette)
+volcano_cannonic <- volcano_plot_gene(df_gene_plot, fdr_cutoff, label_df_cannonical, script_palette, stat_label)
 ggsave(file.path(out_volcanocannonic),
        plot = volcano_cannonic, width = 19, height = 4.5 , dpi = 100)

@@ -3,7 +3,7 @@
 # ============================================================
 # Written by Isabela Almeida
 # Created on Apr 21, 2026
-# Last modified on May 07, 2026
+# Last modified on Nov 20, 2026
 # Version: 1.0.0
 #
 # DESCRIPTION: Plot functions
@@ -560,11 +560,9 @@ density_plot <- function(df, script_palette) {
 # Output: ggplot object
 # Usage: volcano_plot_guide(df, fdr_cutoff, script_palette)
 # ------------------------------------------------------------
-
-volcano_plot_guide <- function(df, fdr_cutoff, script_palette) {
-   plot <- ggplot(df_sgrna_plot, aes(x = LFC, y = -log10(FDR), color = hit)) +
-  geom_point(
-    aes(alpha = alpha_scale)) +
+volcano_plot_guide <- function(df, fdr_cutoff, script_palette, stat_label = "FDR") {
+  plot <- ggplot(df, aes(x = LFC, y = -log10(stat_value), color = hit)) +
+  geom_point(aes(alpha = alpha_scale)) +
   geom_hline(yintercept = -log10(fdr_cutoff), linetype = "dashed", color = "grey50") +
   scale_color_manual(values = script_palette) +
   facet_wrap(~ type,scales = "free", nrow = 1) +
@@ -574,7 +572,7 @@ volcano_plot_guide <- function(df, fdr_cutoff, script_palette) {
   labs(
     title = "Volcano Plot - Guide level",
     x = "Log2 Fold Change",
-    y = expression(-log[10](FDR)),
+    y = bquote(-log[10](.(stat_label))),
     color = "Hits"
   ) +
   theme_grey() +
@@ -599,8 +597,8 @@ volcano_plot_guide <- function(df, fdr_cutoff, script_palette) {
 # Usage: volcano_plot_gene(df, fdr_cutoff, script_palette)
 # ------------------------------------------------------------
 
-volcano_plot_gene <- function(df, fdr_cutoff, label_df, script_palette) {
-  plot <- ggplot(df, aes(x = selected_lfc, y = minus_log10_fdr, color = hit)) +
+volcano_plot_gene <- function(df, fdr_cutoff, label_df, script_palette, stat_label = "FDR") {
+  plot <- ggplot(df, aes(x = selected_lfc, y = minus_log10_stat, color = hit)) +
   geom_point(alpha = 0.7, size = 1.8) +
   geom_hline(yintercept = -log10(fdr_cutoff), linetype = "dashed", color = "grey50") +
   scale_color_manual(values = script_palette) + 
@@ -621,7 +619,7 @@ volcano_plot_gene <- function(df, fdr_cutoff, label_df, script_palette) {
   labs(
     title = "Volcano Plot - Gene level",
     x = "Log2 Fold Change",
-    y = expression(-log[10](FDR)),
+    y = bquote(-log[10](.(stat_label))),
     color = "Hits"
   ) +
   theme_grey() +
