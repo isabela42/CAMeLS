@@ -284,14 +284,17 @@ list_runs | while IFS=$'\037' read -r file celltype negative positive target run
     for dir in pos neg; do
         [ ${dir} = pos ] && c=${poscol} || c=${negcol}
         awk -F'\t' -v OFS='\t' -v c=${c} -v t=${threshold} -v dir=${dir} -v run=${run} -v ct=${celltype} -v norm=${stem} -v lab=${label} -v long=${allhits} '
+            ## Ensembl IDs are matched to the GTF without their version suffix (ENST00000427076.5 -> ENST00000427076)
+            function unver(x) { if (x ~ /^ENS[A-Z]*[0-9]+\.[0-9]+$/) sub(/\.[0-9]+$/, "", x); return x }
             FILENAME==ARGV[1] {P[$1]; next}
             FILENAME==ARGV[2] {N[$1]; next}
             FILENAME==ARGV[3] {T[$1]; next}
-            FILENAME==ARGV[4] {L[$1] = $2 OFS $3 OFS $4 OFS $5 OFS $6 OFS $7 OFS $8; next}
+            FILENAME==ARGV[4] {L[unver($1)] = $2 OFS $3 OFS $4 OFS $5 OFS $6 OFS $7 OFS $8; next}
             FNR==1 {print $0, "chr", "start", "end", "strand", "type", "name", "ucsc-location", "category"; next}
             $c < t {
                 cat = ($1 in P) ? "pos-ctrl" : ($1 in N) ? "neg-ctrl" : ($1 in T) ? "target" : "other"
-                ann = ($1 in L) ? L[$1] : "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA"
+                k = unver($1)
+                ann = (k in L) ? L[k] : "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA" OFS "NA"
                 print $0, ann, cat
                 print $1, cat, run, ct, norm, dir, lab, $c, t, ann >> long
             }' ${positive} ${negative} ${target} ${lookup} ${file} > ${base}.${dir}.gene_summary.txt
